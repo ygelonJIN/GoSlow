@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GoSlow — UI 方向预研 · 6选1</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Cormorant+Garamond:wght@500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:#FAF8F5;color:#111;line-height:1.6}
+.wrap{max-width:1100px;margin:0 auto;padding:48px 24px 80px}
+h1{font-family:"Noto Serif SC",serif;font-size:42px;letter-spacing:-1px}
+.sub{color:#6B7280;margin:8px 0 8px;font-size:15px}
+.badge{display:inline-block;background:#111;color:#fff;font-size:12px;padding:4px 10px;border-radius:999px;letter-spacing:.06em;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:36px}
+@media(max-width:900px){.grid{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.grid{grid-template-columns:1fr}}
+.card{background:#fff;border-radius:20px;overflow:hidden;border:1px solid #EDE9E3;transition:.2s;cursor:pointer;display:flex;flex-direction:column}
+.card:hover{transform:translateY(-4px);box-shadow:0 20px 40px rgba(0,0,0,.10)}
+.thumb{height:200px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.thumb span{font-size:48px}
+.meta{padding:18px 20px 20px}
+.meta h3{font-size:17px;font-weight:700}
+.meta p{font-size:13px;color:#6B7280;margin:6px 0 12px;line-height:1.5;min-height:38px}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tags i{font-style:normal;font-size:11px;border:1px solid #E5E7EB;border-radius:999px;padding:3px 8px;background:#F9FAFB;color:#374151}
+.go{display:inline-flex;align-items:center;gap:6px;margin-top:12px;font-size:13px;font-weight:600;color:#fff;background:#111;border-radius:999px;padding:8px 14px;text-decoration:none}
+.tip{background:#fff;border:1px dashed #D1D5DB;border-radius:16px;padding:18px 20px;margin-top:28px;color:#4B5563;font-size:13px}
+.tip b{color:#111}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="badge">GOSLOW · UI DIRECTION · 2026.08</div>
+  <h1>选一个“慢”的样子</h1>
+  <p class="sub">同一份内容，6种气质。点开任意一套看完整 4 屏预览（内容列表 / 阅读高亮 / 闪卡 / 统计）。<br>全部为纯HTML，可直接浏览器打开，无需构建。</p>
+
+  <div class="grid">
+    <div class="card" onclick="location.href='preview-a-paper-editorial.html'">
+      <div class="thumb" style="background:#FAF8F5;border-bottom:1px solid #EDE9E3">
+        <span>📖</span>
+        <div style="position:absolute;left:18px;bottom:14px;background:#1A1C1E;color:#FAF8F5;font-size:10px;padding:4px 8px;border-radius:999px;letter-spacing:.08em">A · PAPER EDITORIAL</div>
+      </div>
+      <div class="meta">
+        <h3>A — 纸感文学</h3>
+        <p>暖纸 + 油墨 + 衬线标题。像一本文学杂志，安静、可久读。</p>
+        <div class="tags"><i>暖白 #FAF8F5</i><i>衬线</i><i>0阴影</i></div>
+        <a class="go" href="preview-a-paper-editorial.html">查看预览 →</a>
+      </div>
+    </div>
+
+    <div class="card" onclick="location.href='preview-b-swiss-grid.html'">
+      <div class="thumb" style="background:#FFFFFF;border-bottom:1px solid #111">
+        <span>◫</span>
+        <div style="position:absolute;left:18px;bottom:14px;background:#111;color:#fff;font-size:10px;padding:4px 8px;border-radius:999px;letter-spacing:.08em">B · SWISS GRID</div>
+      </div>
+      <div class="meta">
+        <h3>B — 瑞士网格</h3>
+        <p>黑白强网格 + 红点缀。Notion/Linear般的理性与秩序感。</p>
+        <div class="tags"><i>纯白 #FFF</i><i>Helvetica</i><i>硬网格</i></div>
+        <a class="go" href="preview-b-swiss-grid.html">查看预览 →</a>
+      </div>
+    </div>
+
+    <div class="card" onclick="location.href='preview-c-wabi-ink.html'">
+      <div class="thumb" style="background:#F2F0EB;border-bottom:1px solid #D6D0C4">
+        <span>◯</span>
+        <div style="position:absolute;left:18px;bottom:14px;background:#1A1A1A;color:#F2F0EB;font-size:10px;padding:4px 8px;border-radius:999px;letter-spacing:.08em">C · WABI INK</div>
+      </div>
+      <div class="meta">
+        <h3>C — 侘寂水墨</h3>
+        <p>留白即设计。一点朱红点睛，其余交给呼吸。</p>
+        <div class="tags"><i>石色 #F2F0EB</i><i>朱红 #B42314</i><i>极简</i></div>
+        <a class="go" href="preview-c-wabi-ink.html">查看预览 →</a>
+      </div>
+    </div>
+
+    <div class="card" onclick="location.href='preview-d-soft-haze.html'">
+      <div class="thumb" style="background:#F6F1EB;border-bottom:1px solid #E8DDD0">
+        <span>✿</span>
+        <div style="position:absolute;left:18px;bottom:14px;background:#8FA98B;color:#fff;font-size:10px;padding:4px 8px;border-radius:999px;letter-spacing:.08em">D · SOFT HAZE</div>
+      </div>
+      <div class="meta">
+        <h3>D — 莫兰迪薄雾</h3>
+        <p>低饱和鼠尾草/陶土/雾蓝。柔软、治愈、像Aesop门店。</p>
+        <div class="tags"><i>莫兰迪</i><i>圆润 20px</i><i>无描边</i></div>
+        <a class="go" href="preview-d-soft-haze.html">查看预览 →</a>
+      </div>
+    </div>
+
+    <div class="card" onclick="location.href='preview-e-typewriter.html'">
+      <div class="thumb" style="background:#FFF9E6;border-bottom:1px solid #111">
+        <span style="font-family:JetBrains Mono,monospace;font-size:28px">Aa</span>
+        <div style="position:absolute;left:18px;bottom:14px;background:#111;color:#FFF9E6;font-size:10px;padding:4px 8px;border-radius:999px;letter-spacing:.08em">E · TYPEWRITER</div>
+      </div>
+      <div class="meta">
+        <h3>E — 打字机档案</h3>
+        <p>等宽字体 + 卡片目录。像翻一盒旧词卡，有收藏癖的快乐。</p>
+        <div class="tags"><i>等宽</i><i>1px描边</i><i>复古</i></div>
+        <a class="go" href="preview-e-typewriter.html">查看预览 →</a>
+      </div>
+    </div>
+
+    <div class="card" onclick="location.href='preview-f-midnight-library.html'">
+      <div class="thumb" style="background:#0F172A;border-bottom:1px solid #1E293B">
+        <span style="filter:brightness(2)">🌙</span>
+        <div style="position:absolute;left:18px;bottom:14px;background:#F59E0B;color:#0F172A;font-size:10px;padding:4px 8px;border-radius:999px;letter-spacing:.08em">F · MIDNIGHT LIBRARY</div>
+      </div>
+      <div class="meta">
+        <h3>F — 午夜图书馆</h3>
+        <p>深海军蓝夜读模式。护眼、沉浸，适合睡前听歌看字幕。</p>
+        <div class="tags"><i>深蓝 #0F172A</i><i>琥珀 #F59E0B</i><i>Dark</i></div>
+        <a class="go" href="preview-f-midnight-library.html">查看预览 →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <b>怎么选？</b> 建议先凭直觉选 1–2 个最“想每天打开”的，然后告诉我编号（例如 “A + F 夜读版”），我会把选中的方向直接翻译成 <code>docs/design-spec.md v2.0</code> + <code>lib/app/design/*</code> 的真实 Token，落实到 Flutter。
+    <br><br>
+    <b>路径：</b><code>/docs/ui-previews/</code> · 双击任意 <code>preview-*.html</code> 即可离线预览 · 已同步到 Finder 可直接打开。
+  </div>
+</div>
+</body>
+</html>

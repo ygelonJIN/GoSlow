@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B · 瑞士网格 — GoSlow</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#F4F4F5;--card:#FFFFFF;--ink:#111111;--line:#111111;--muted:#71717A;--red:#E60012;--red-soft:#FFE4E6;--blue:#2563EB}
+body{background:var(--bg);color:var(--ink);font-family:Inter,sans-serif}
+.top{max-width:1280px;margin:0 auto;padding:28px 24px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+.top h1{font-size:22px;letter-spacing:-.02em}
+.top h1 span{font-size:10px;letter-spacing:.14em;background:var(--ink);color:#fff;padding:4px 8px;vertical-align:middle;margin-left:10px}
+.top p{color:var(--muted);font-size:13px;max-width:560px}
+.back{font-size:13px;border:1.5px solid var(--ink);padding:8px 14px;text-decoration:none;color:var(--ink);font-weight:700}
+.phones{max-width:1280px;margin:28px auto 60px;padding:0 24px;display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+@media(max-width:1200px){.phones{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.phones{grid-template-columns:1fr}}
+.phone{background:#fff;border:1.5px solid var(--ink);display:flex;flex-direction:column;min-height:650px}
+.p-head{height:36px;border-bottom:1.5px solid var(--ink);display:flex;align-items:center;justify-content:space-between;padding:0 12px;font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.08em}
+.p-appbar{padding:14px 14px 10px;border-bottom:1.5px solid var(--ink);display:flex;justify-content:space-between;align-items:center}
+.p-appbar h2{font-size:17px;font-weight:800;letter-spacing:-.02em}
+.p-appbar small{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.12em;color:var(--muted)}
+.search{margin:12px 14px;border:1.5px solid var(--ink);padding:10px 12px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1.5px solid var(--ink);border-bottom:1.5px solid var(--ink);margin:0 0 10px}
+.grid2 div{padding:10px 14px;border-right:1.5px solid var(--ink)}
+.grid2 div:last-child{border-right:none}
+.grid2 b{font-size:20px;letter-spacing:-.03em}
+.grid2 p{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--muted);letter-spacing:.06em}
+.list-item{padding:12px 14px;border-bottom:1px solid #E4E4E7;display:flex;justify-content:space-between;align-items:center}
+.list-item h3{font-size:13px;font-weight:700}
+.list-item p{font-size:11px;color:var(--muted);margin-top:2px;font-family:"IBM Plex Mono",monospace}
+.tag{font-size:10px;font-weight:800;letter-spacing:.06em;padding:4px 7px;border:1.5px solid var(--ink)}
+.tag.red{background:var(--red);color:#fff;border-color:var(--red)}
+.nav{margin-top:auto;border-top:1.5px solid var(--ink);display:flex}
+.nav span{flex:1;text-align:center;padding:10px 4px;font-size:10px;font-weight:800;letter-spacing:.06em;border-right:1.5px solid var(--ink)}
+.nav span:last-child{border-right:none}
+.nav .on{background:var(--ink);color:#fff}
+.read{padding:16px;line-height:1.9;font-size:13px}
+.read h3{font-size:20px;font-weight:800;letter-spacing:-.02em;border-left:4px solid var(--red);padding-left:10px;margin-bottom:12px}
+.hl{background:var(--ink);color:#fff;padding:1px 4px;font-weight:700}
+.hl2{background:var(--red-soft);border:1px solid var(--red);padding:1px 4px;font-weight:700}
+.sheet{border-top:1.5px solid var(--ink);padding:14px;background:#fff}
+.sheet h4{font-size:18px;font-weight:800}
+.ph{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted)}
+.def{margin-top:8px;font-size:13px;line-height:1.6;border-left:2px solid var(--ink);padding-left:10px}
+.actions{display:flex;gap:8px;margin-top:12px}
+.btn{flex:1;text-align:center;padding:10px;font-size:11px;font-weight:800;letter-spacing:.06em;border:1.5px solid var(--ink)}
+.btn.on{background:var(--ink);color:#fff}
+.flash{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 16px;text-align:center}
+.big{font-size:44px;font-weight:800;letter-spacing:-.04em}
+.subp{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted);letter-spacing:.08em;margin-top:4px}
+.card2{width:100%;border:1.5px solid var(--ink);padding:14px;text-align:left;margin-top:16px}
+.row3{display:flex;gap:8px;width:100%;margin-top:16px}
+.row3 span{flex:1;padding:11px;text-align:center;font-size:11px;font-weight:800;letter-spacing:.06em;border:1.5px solid var(--ink)}
+.row3 .a{background:var(--red);color:#fff;border-color:var(--red)}
+.stats{padding:14px}
+.kpi2{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1.5px solid var(--ink)}
+.kpi2 div{padding:14px;border-right:1.5px solid var(--ink)}
+.kpi2 div:last-child{border-right:none}
+.kpi2 b{font-size:22px;font-weight:800}
+.chart2{margin-top:12px;border:1.5px solid var(--ink);padding:12px}
+.bar{display:flex;align-items:end;gap:4px;height:56px;margin-top:10px}
+.bar i{flex:1;background:var(--ink);display:block}
+.bar i:nth-child(3){background:var(--red)}
+</style>
+</head>
+<body>
+<div class="top">
+  <div><h1>B · 瑞士网格 <span>SWISS GRID</span></h1><p>纯白 × 纯黑 × 信号红 #E60012。1.5px 硬描边、无圆角、强网格。像 Linear / Figma 般精确、理性、克制。</p></div>
+  <a class="back" href="index.html">← 返回</a>
+</div>
+<div class="phones">
+  <div class="phone">
+    <div class="p-head"><span>09:41 — GOSLOW</span><span>● REC</span></div>
+    <div class="p-appbar"><div><small>CONTENT — 07</small><h2>内容</h2></div><span style="border:1.5px solid #111;padding:6px 10px;font-size:11px;font-weight:800">＋ NEW</span></div>
+    <div class="search">⌕ &nbsp;SEARCH — TEXT / WORD</div>
+    <div class="grid2"><div><b>07</b><p>CONTENTS</p></div><div><b>1,247</b><p>WORDS KNOWN</p></div></div>
+    <div class="list-item"><div><h3>THE GREAT GATSBY — CH.3</h3><p>EPUB · 2,341 WORDS · 62%</p></div><span class="tag red">READ</span></div>
+    <div class="list-item"><div><h3>BLINDING LIGHTS — LRC</h3><p>LRC · 147 WORDS · 12 HIGHLIGHTS</p></div><span class="tag">LRC</span></div>
+    <div class="list-item"><div><h3>PASTE & HIGHLIGHT</h3><p>ANY PARAGRAPH → INSTANT</p></div><span class="tag">TRY →</span></div>
+    <div class="nav"><span class="on">内容</span><span>闪卡</span><span>收藏</span><span>设置</span></div>
+  </div>
+
+  <div class="phone">
+    <div class="p-head"><span>READER</span><span>CET-6 · 12 FOUND</span></div>
+    <div class="p-appbar"><div style="display:flex;gap:10px;align-items:center"><span style="border:1.5px solid #111;width:28px;height:28px;display:grid;place-items:center;font-weight:800">‹</span><h2 style="font-size:14px">CHAPTER 3 — THE PARTY</h2></div></div>
+    <div class="read">
+      <h3>The smile that vanished</h3>
+      He smiled <span class="hl">understandingly</span> — much more than understandingly. It was one of those rare smiles with a quality of <span class="hl2">eternal</span> reassurance in it, that you may come across four or five times in life. It <span class="hl">vanished</span>, and I was looking at an <span class="hl">elegant</span> young rough-neck...
+      <div style="margin-top:14px;border:1.5px solid #111;padding:8px 10px;font-family:'IBM Plex Mono',monospace;font-size:10px;display:flex;justify-content:space-between"><span>TAP WORD FOR DEFINITION</span><span>● CET-6 ONLY</span></div>
+    </div>
+    <div class="sheet">
+      <div style="display:flex;justify-content:space-between"><h4>ETERNAL <span style="background:var(--ink);color:#fff;font-size:10px;padding:2px 6px;vertical-align:middle">ADJ.</span></h4><span>🔊</span></div>
+      <div class="ph">/ɪˈtɜːnl/ — CET-6 / IELTS</div>
+      <div class="def"><b>永恒的；无尽的</b><br>lasting or existing forever; without end.</div>
+      <div class="actions"><span class="btn">☆ FAV</span><span class="btn on">ADD → QUEUE</span><span class="btn">KNOWN</span></div>
+    </div>
+  </div>
+
+  <div class="phone">
+    <div class="p-head"><span>FLASHCARD</span><span>12 / 20</span></div>
+    <div class="p-appbar"><div><small>RECOGNITION ONLY</small><h2>闪卡</h2></div><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;border:1.5px solid #111;padding:6px 10px">60% ———</span></div>
+    <div class="flash">
+      <div class="big">VANISH</div>
+      <div class="subp">/ˈvænɪʃ/ · VI. · CET-6</div>
+      <div class="card2"><b>消失；突然不见</b><br><span style="color:var(--muted);font-size:12px">disappear suddenly and completely</span><br><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted)">EX. It vanished, and I was looking at...</span></div>
+      <div class="row3"><span class="a">认识 ✓</span><span>模糊</span><span style="background:var(--ink);color:#fff">不认识</span></div>
+    </div>
+    <div class="nav"><span>内容</span><span class="on">闪卡</span><span>收藏</span><span>设置</span></div>
+  </div>
+
+  <div class="phone">
+    <div class="p-head"><span>STATS</span><span>OUTCOME-DRIVEN</span></div>
+    <div class="p-appbar"><div><small>PROGRESS</small><h2>收获</h2></div><span style="width:28px;height:28px;border:1.5px solid #111;display:grid;place-items:center">◯</span></div>
+    <div class="stats">
+      <div class="kpi2"><div><b>1,247</b><p>KNOWN</p></div><div><b>38.2h</b><p>HOURS</p></div></div>
+      <div class="chart2">
+        <div style="font-size:10px;letter-spacing:.1em;font-weight:800">WEEKLY — NEW WORDS</div>
+        <div class="bar"><i style="height:30px"></i><i style="height:42px"></i><i style="height:54px"></i><i style="height:48px"></i><i style="height:32px"></i><i style="height:46px"></i><i style="height:40px"></i></div>
+        <div style="display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);margin-top:6px"><span>MON</span><span>SUN</span></div>
+      </div>
+      <div style="margin-top:10px;border:1.5px solid var(--ink);padding:12px;display:flex;justify-content:space-between;align-items:center;background:var(--red);color:#fff"><b>🎉 读完一本书 · +23 词</b><span style="border:1.5px solid #fff;padding:4px 8px;font-size:11px;font-weight:800">SHARE →</span></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

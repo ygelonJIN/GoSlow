@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>F · 午夜图书馆 — GoSlow</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0B1220;--phone:#0F172A;--card:#1E293B;--card2:#1A2540;--ink:#F1F5F9;--muted:#94A3B8;--line:#1E293B;--amber:#F59E0B;--amber-soft:rgba(245,158,11,.14);--teal:#22D3EE}
+body{background:radial-gradient(900px 500px at 20% 0%, #1E293B 0%, transparent 60%), radial-gradient(800px 600px at 95% 10%, rgba(245,158,11,.10) 0%, transparent 60%), var(--bg);color:var(--ink);font-family:Inter,sans-serif;min-height:100vh}
+.top{max-width:1280px;margin:0 auto;padding:28px 24px 0;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px}
+.top h1{font-size:22px;letter-spacing:-.02em;color:#F1F5F9}
+.top h1 span{font-size:10px;letter-spacing:.14em;background:var(--amber);color:#0F172A;padding:4px 9px;vertical-align:middle;margin-left:10px;border-radius:999px;font-weight:700}
+.top p{color:#94A3B8;font-size:13px;max-width:560px;margin-top:6px;line-height:1.6}
+.back{font-size:13px;border:1px solid #334155;padding:8px 14px;border-radius:999px;text-decoration:none;color:#F1F5F9;background:rgba(255,255,255,.06)}
+.phones{max-width:1280px;margin:28px auto 60px;padding:0 24px;display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+@media(max-width:1200px){.phones{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.phones{grid-template-columns:1fr}}
+.phone{background:var(--phone);border:1px solid #1E293B;border-radius:28px;overflow:hidden;display:flex;flex-direction:column;min-height:660px;box-shadow:0 20px 60px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.04) inset}
+.p-head{height:42px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;font-size:11px;letter-spacing:.08em;color:#64748B;border-bottom:1px solid #1E293B;background:rgba(255,255,255,.02)}
+.p-appbar{padding:16px 18px 14px;display:flex;justify-content:space-between;align-items:center}
+.p-appbar h2{font-size:17px;font-weight:700;color:#F1F5F9}
+.p-appbar small{font-size:10px;letter-spacing:.14em;color:#64748B;font-weight:600}
+.icon{width:32px;height:32px;border-radius:50%;background:var(--amber);color:#0F172A;display:grid;place-items:center;font-weight:800}
+.search{margin:0 18px;background:var(--card);border:1px solid #334155;border-radius:14px;padding:11px 14px;display:flex;align-items:center;gap:10px;color:#94A3B8;font-size:13px}
+.section{padding:16px 18px 8px;font-size:10px;letter-spacing:.14em;color:#64748B;font-weight:700;display:flex;justify-content:space-between}
+.card{background:var(--card);border:1px solid #334155;border-radius:18px;padding:16px;margin:0 18px 10px}
+.card h3{font-size:13.5px;font-weight:600;line-height:1.4;color:#F1F5F9;font-family:"Newsreader",serif}
+.card p{font-size:12px;color:#94A3B8;margin-top:4px;line-height:1.5}
+.pills{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.pills i{font-style:normal;font-size:10px;font-weight:700;letter-spacing:.04em;padding:5px 10px;border-radius:999px}
+.pills .amber{background:var(--amber-soft);color:var(--amber);border:1px solid rgba(245,158,11,.22)}
+.pills .muted{background:rgba(255,255,255,.06);color:#94A3B8;border:1px solid #334155}
+.progress{height:5px;background:#1E293B;border-radius:999px;overflow:hidden;margin-top:12px}
+.progress em{display:block;height:100%;background:var(--amber);border-radius:999px;box-shadow:0 0 10px rgba(245,158,11,.5)}
+.nav{margin-top:auto;background:rgba(255,255,255,.04);border-top:1px solid #1E293B;display:flex;justify-content:space-around;padding:10px 6px 14px}
+.nav div{text-align:center;font-size:10px;letter-spacing:.06em;color:#64748B;font-weight:600}
+.nav .on{color:var(--amber)}
+.nav i{font-style:normal;font-size:18px;display:block}
+.read{padding:18px;line-height:1.95;font-size:13.5px;color:#CBD5E1;font-family:"Newsreader",serif}
+.read h3{font-family:Inter,sans-serif;font-size:16px;font-weight:700;color:#F1F5F9;margin-bottom:12px;letter-spacing:-.02em}
+.hl{background:rgba(245,158,11,.18);border-bottom:2px solid rgba(245,158,11,.55);border-radius:4px;padding:1px 4px;color:#FDE68A;font-weight:600}
+.hl2{background:rgba(34,211,238,.14);border-bottom:2px solid rgba(34,211,238,.45);border-radius:4px;padding:1px 4px;color:#A5F3FC;font-weight:600}
+.sheet{background:#131E35;border-top:1px solid #1E293B;border-radius:22px 22px 0 0;padding:18px;box-shadow:0 -16px 40px rgba(0,0,0,.35)}
+.sheet h4{font-size:18px;color:#F1F5F9}
+.ph{font-size:12px;color:#94A3B8}
+.def{margin-top:8px;font-size:13px;line-height:1.6;color:#CBD5E1}
+.def b{color:#F1F5F9}
+.actions{display:flex;gap:8px;margin-top:14px}
+.btn{flex:1;text-align:center;font-size:12px;font-weight:700;padding:11px;border-radius:999px;border:1px solid #334155}
+.btn.ghost{background:rgba(255,255,255,.06);color:#F1F5F9}
+.btn.on{background:var(--amber);color:#0F172A;border-color:var(--amber)}
+.flash{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:22px 18px;text-align:center}
+.big{font-size:46px;font-weight:700;letter-spacing:-.02em;color:#F1F5F9;text-shadow:0 0 30px rgba(245,158,11,.25)}
+.subp{font-size:12px;color:#94A3B8;letter-spacing:.08em;margin-top:4px}
+.card2{width:100%;background:var(--card);border:1px solid #334155;border-radius:18px;padding:16px;text-align:left;margin-top:18px}
+.row3{display:flex;gap:8px;width:100%;margin-top:16px}
+.row3 span{flex:1;padding:12px;text-align:center;font-size:12px;font-weight:800;border-radius:999px;border:1px solid #334155}
+.row3 .a{background:var(--amber);color:#0F172A;border-color:var(--amber)}
+.row3 .b{background:rgba(255,255,255,.06);color:#F1F5F9}
+.row3 .c{background:#F1F5F9;color:#0F172A}
+.stats{padding:18px}
+.kpi{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpi div{background:var(--card);border:1px solid #334155;border-radius:18px;padding:16px}
+.kpi b{font-size:22px;color:#F1F5F9}
+.kpi p{font-size:10px;letter-spacing:.1em;color:#64748B;font-weight:700;margin-top:2px}
+.chart{background:var(--card);border:1px solid #334155;border-radius:18px;padding:16px;margin-top:12px}
+.bars{display:flex;align-items:end;gap:6px;height:56px;margin-top:10px}
+.bars i{flex:1;background:#334155;border-radius:6px 6px 0 0;display:block}
+.bars i:nth-child(4){background:var(--amber);box-shadow:0 0 12px rgba(245,158,11,.4)}
+.glow{position:absolute;width:220px;height:220px;background:radial-gradient(circle, rgba(245,158,11,.14) 0%, transparent 70%);pointer-events:none;filter:blur(10px)}
+</style>
+</head>
+<body>
+<div class="top">
+  <div><h1>F · 午夜图书馆 <span>MIDNIGHT LIBRARY</span></h1><p>午夜蓝 #0F172A × 琥珀 #F59E0B × 雾灰。深色纸底 + 微光高亮，护眼、沉浸、像夜航的机舱灯。唯一一套 Dark 主题，可作“夜读模式”保留。</p></div>
+  <a class="back" href="index.html">← 返回</a>
+</div>
+<div class="phones">
+  <div class="phone" style="position:relative;overflow:hidden">
+    <div class="glow" style="top:-40px;right:-30px"></div>
+    <div class="p-head"><span style="color:#F59E0B">● GoSlow</span><span>09:41 · Night</span></div>
+    <div class="p-appbar"><div><small style="color:#64748B">CONTENTS — 07</small><h2>内容</h2></div><div class="icon">＋</div></div>
+    <div class="search">⌕ &nbsp;搜索标题 / 词 · 夜读已开启</div>
+    <div class="section"><span>最近阅读</span><span style="color:var(--amber)">全部 ›</span></div>
+    <div class="card">
+      <h3>The Great Gatsby — Chapter 3</h3>
+      <p>“He smiled understandingly — much more than…”</p>
+      <div class="pills"><i class="amber">考研</i><i class="muted">62% · 2,341 词</i></div>
+      <div class="progress"><em style="width:62%"></em></div>
+    </div>
+    <div class="card" style="display:flex;gap:12px;align-items:center"><div style="width:44px;height:44px;border-radius:14px;background:rgba(34,211,238,.12);display:grid;place-items:center;color:#22D3EE;border:1px solid rgba(34,211,238,.2)">♪</div><div><h3>Blinding Lights — 歌词</h3><p>LRC · 12 处高亮 · 适合夜听</p></div></div>
+    <div class="card" style="background:linear-gradient(135deg, rgba(245,158,11,.14), rgba(245,158,11,.04));border-color:rgba(245,158,11,.22);display:flex;gap:12px;align-items:center"><div style="width:44px;height:44px;border-radius:14px;background:var(--amber);display:grid;place-items:center;color:#0F172A">✦</div><div><h3 style="color:#FDE68A">粘贴一段 · 立即高亮</h3><p style="color:#F59E0B">任意英文，琥珀色标出考纲词</p></div></div>
+    <div class="nav"><div class="on"><i>◐</i>内容</div><div><i>⬔</i>闪卡</div><div><i>☆</i>收藏</div><div><i>⚙</i>设置</div></div>
+  </div>
+
+  <div class="phone">
+    <div class="p-head"><span>READER · CET-6</span><span style="background:var(--amber);color:#0F172A;padding:4px 8px;border-radius:999px;font-weight:700">12 词</span></div>
+    <div class="p-appbar"><div style="display:flex;gap:10px;align-items:center"><span style="width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid #334155;display:grid;place-items:center;color:#F1F5F9">‹</span><div><small>THE GREAT GATSBY</small><h2 style="font-size:15px;margin:0">Chapter 3</h2></div></div><span style="font-size:11px;color:#94A3B8;border:1px solid #334155;padding:6px 10px;border-radius:999px">Aa</span></div>
+    <div class="read">
+      <h3>The Party at Gatsby's</h3>
+      He smiled <span class="hl">understandingly</span> — much more than understandingly. It was one of those rare smiles with a quality of <span class="hl">eternal</span> reassurance in it, that you may come across four or five times in life. It <span class="hl2">vanished</span>, and I was looking at an <span class="hl">elegant</span> young rough-neck...
+      <div style="margin-top:16px;background:rgba(255,255,255,.04);border:1px solid #1E293B;border-radius:14px;padding:10px 12px;font-family:Inter,sans-serif;font-size:11px;color:#94A3B8;display:flex;justify-content:space-between"><span>CET-6 · 点词见释义</span><span style="color:var(--amber)">● 12 found</span></div>
+    </div>
+    <div class="sheet">
+      <div style="width:36px;height:4px;background:#334155;border-radius:999px;margin:0 auto 14px"></div>
+      <div style="display:flex;justify-content:space-between"><div><h4>eternal <span style="background:var(--amber);color:#0F172A;font-size:10px;padding:3px 8px;border-radius:999px;vertical-align:middle;font-weight:800">adj.</span></h4><div class="ph">/ɪˈtɜːnl/ · 考研 / 雅思</div></div><span style="width:32px;height:32px;border-radius:50%;background:rgba(245,158,11,.14);display:grid;place-items:center">🔊</span></div>
+      <div class="def"><b>永恒的；无尽的</b><br><span style="color:#94A3B8">lasting or existing forever; without end.</span><br><span style="font-size:12px;color:#64748B">“...with a quality of eternal reassurance...”</span></div>
+      <div class="actions"><span class="btn ghost">☆ 收藏</span><span class="btn on">加入闪卡</span><span class="btn ghost">认识了</span></div>
+    </div>
+  </div>
+
+  <div class="phone">
+    <div class="p-head"><span>FLASHCARD — 12 / 20</span><span>60%</span></div>
+    <div class="p-appbar"><small>RECOGNITION FIRST · DARK</small><h2>闪卡</h2></div>
+    <div style="margin:0 18px;height:6px;background:#1E293B;border-radius:999px;overflow:hidden"><em style="display:block;width:60%;height:100%;background:var(--amber);box-shadow:0 0 10px rgba(245,158,11,.5)"></em></div>
+    <div class="flash">
+      <div class="big">vanish</div>
+      <div class="subp">/ˈvænɪʃ/ · vi. · CET-6</div>
+      <div class="card2" style="box-shadow:0 0 30px rgba(245,158,11,.08)"><b style="color:#F1F5F9">消失；突然不见</b><br><span style="color:#94A3B8;font-size:12px">disappear suddenly and completely</span><br><span style="font-size:11px;color:#64748B">原句：It vanished, and I was looking at…</span></div>
+      <div class="row3"><span class="a">认识 ✓</span><span class="b">模糊</span><span class="c">不认识</span></div>
+      <div style="margin-top:10px;font-size:11px;color:#64748B">翻面仅释义 · 无语法拆解</div>
+    </div>
+    <div class="nav"><div><i>◐</i>内容</div><div class="on"><i>⬔</i>闪卡</div><div><i>☆</i>收藏</div><div><i>⚙</i>设置</div></div>
+  </div>
+
+  <div class="phone">
+    <div class="p-head"><span>PROGRESS</span><span>收获 · 夜读</span></div>
+    <div class="p-appbar"><small>THIS WEEK — DARK</small><h2>收获</h2></div>
+    <div class="stats">
+      <div class="kpi"><div><b>1,247</b><p>认识 · CET-6</p></div><div><b>38.2h</b><p>沉浸</p></div></div>
+      <div class="chart">
+        <div style="font-size:10px;letter-spacing:.12em;font-weight:700;color:var(--amber)">本周 · 新认识</div>
+        <div class="bars"><i style="height:30px"></i><i style="height:42px"></i><i style="height:54px"></i><i style="height:56px"></i><i style="height:34px"></i><i style="height:44px"></i><i style="height:40px"></i></div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:#64748B;margin-top:6px"><span>Mon</span><span>Sun</span></div>
+      </div>
+      <div style="margin-top:12px;background:linear-gradient(135deg, #F59E0B, #FBBF24);color:#0F172A;border-radius:18px;padding:16px;display:flex;justify-content:space-between;align-items:center"><div><b>🎉 读完一本书</b><br><span style="font-size:12px;opacity:.8">Gatsby · 新得 23 词</span></div><span style="background:#0F172A;color:#FDE68A;padding:7px 12px;border-radius:999px;font-size:11px;font-weight:700">去分享 →</span></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

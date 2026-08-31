@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# 工作区"沙箱内" flutter 入口（Cursor 内嵌终端专用）。
+#
+# 背景：编辑器内嵌终端受 macOS 沙箱限制，写不了用户主目录，
+# 因此 tool/flutter（Terminal 用）在 Cursor 内会因无法写 SDK cache 而失败。
+# 本脚本用"可写的假 FLUTTER_ROOT"绕开：
+#   - fake-root 的 bin/cache 是真实可写目录（lockfile/stamp 落这里）
+#   - dart-sdk / artifacts / packages / internal 全部软链到本机 SDK（只读引用）
+#   - HOME 钉到 .fvm/analyze-home，PUB_CACHE 钉到 .fvm/pub-cache
+#
+# 用法：tool/flutter-sandbox test / build / pub get / ...（全部 flutter 子命令）
+# 注意：构建产物校验以 Terminal 里的 ./tool/flutter 为准，本入口仅用于
+#       Cursor 内快速验证（测试、静态检查、生成模板）。
+set -e
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REAL_SDK="$(cd "$ROOT/.fvm/versions/stable" && pwd)"
+FAKE="$ROOT/.fvm/fake-root"
+
+export FLUTTER_SUPPRESS_ANALYTICS=true
+export HOME="$ROOT/.fvm/analyze-home"
+mkdir -p "$HOME"
+export PUB_CACHE="${PUB_CACHE:-$ROOT/.fvm/pub-cache}"
+
+# ---- 构建 fake-root（幂等） ----
+if [ ! -x "$FAKE/bin/cache/dart-sdk/bin/dart" ]; then
+  mkdir -p "$FAKE/bin/cache"
+  # bin/cache 为可写目录，内部软链 SDK 产物（只读引用）
+  for entry in dart-sdk artifacts flutter_tools.snapshot flutter_tools.stamp \
+               flutter.version.json engine.stamp engine.realm engine_stamp.json \
+               engine-dart-sdk.stamp flutter_web_sdk flutter_sdk.stamp \
+               android-sdk.stamp ios-sdk.stamp macos-sdk.stamp material_fonts.stamp \
+               flutter_version_check.stamp; do
+    if [ -e "$REAL_SDK/bin/cache/$entry" ]; then
+      ln -sfn "$REAL_SDK/bin/cache/$entry" "$FAKE/bin/cache/$entry"
+    fi
+  done
+  # 其余 *.stamp 一并软链（避免 artifact 被判过期而尝试重写真实 SDK）
+  for f in "$REAL_SDK"/bin/cache/*.stamp; do
+    name="$(basename "$f")"
+    [ -e "$FAKE/bin/cache/$name" ] || ln -sfn "$f" "$FAKE/bin/cache/$name"
+  done
+  # bin/internal 软链（版本文件读取），bin 其余入口指向真实 SDK
+  ln -sfn "$REAL_SDK/bin/internal" "$FAKE/bin/internal"
+  ln -sfn "$REAL_SDK/bin/flutter" "$FAKE/bin/flutter"
+  ln -sfn "$REAL_SDK/bin/dart" "$FAKE/bin/dart"
+  ln -sfn "$REAL_SDK/packages" "$FAKE/packages"
+fi
+
+export FLUTTER_ROOT="$FAKE"
+DART="$FAKE/bin/cache/dart-sdk/bin/dart"
+SNAPSHOT="$FAKE/bin/cache/flutter_tools.snapshot"
+PACKAGE_CONFIG="$FAKE/packages/flutter_tools/.dart_tool/package_config.json"
+
+exec "$DART" --packages="$PACKAGE_CONFIG" "$SNAPSHOT" "$@"

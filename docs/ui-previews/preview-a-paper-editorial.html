@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A · 纸感文学 — GoSlow</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--paper:#FAF8F5;--card:#FFFFFF;--ink:#1A1C1E;--muted:#8B8680;--line:#EDE9E3;--seed:#3B6EA5;--seed-soft:#E8EEF6;--accent:#C9A96E}
+body{background:var(--paper);color:var(--ink);font-family:Inter,sans-serif}
+a{color:inherit}
+.top{max-width:1280px;margin:0 auto;padding:28px 24px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.top h1{font-family:"Noto Serif SC",serif;font-size:22px}
+.top h1 span{font-family:Inter,sans-serif;font-size:11px;letter-spacing:.14em;background:var(--ink);color:var(--paper);padding:4px 8px;border-radius:999px;vertical-align:middle;margin-left:10px}
+.top p{color:var(--muted);font-size:13px;max-width:560px;line-height:1.6}
+.top a.back{font-size:13px;border:1px solid var(--line);padding:8px 14px;border-radius:999px;background:#fff;text-decoration:none}
+.phones{max-width:1280px;margin:28px auto 60px;padding:0 24px;display:grid;grid-template-columns:repeat(4,1fr);gap:22px}
+@media(max-width:1200px){.phones{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.phones{grid-template-columns:1fr}}
+.phone{width:100%;background:var(--paper);border:1px solid var(--line);border-radius:28px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 30px rgba(26,28,30,.06);min-height:640px}
+.p-head{height:42px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;font-size:11px;letter-spacing:.08em;color:var(--muted);border-bottom:1px solid var(--line);background:var(--paper)}
+.p-appbar{padding:16px 16px 12px;display:flex;align-items:center;justify-content:space-between}
+.p-appbar h2{font-family:"Noto Serif SC",serif;font-size:18px}
+.p-appbar small{font-size:10px;letter-spacing:.12em;color:var(--muted);display:block;margin-bottom:2px}
+.icon{width:30px;height:30px;border-radius:999px;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:14px}
+.search{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;margin:0 16px}
+.section{padding:16px 16px 6px;font-size:11px;letter-spacing:.12em;color:var(--muted);font-weight:600;display:flex;justify-content:space-between}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin:0 16px 10px}
+.card h3{font-family:"Noto Serif SC",serif;font-size:14px;line-height:1.4}
+.card p{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5}
+.meta{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.meta i{font-style:normal;font-size:10px;letter-spacing:.06em;background:var(--seed-soft);color:var(--seed);padding:4px 8px;border-radius:999px;font-weight:600}
+.progress{height:4px;background:var(--line);border-radius:999px;overflow:hidden;margin-top:10px}
+.progress em{display:block;height:100%;background:var(--seed);border-radius:999px}
+.nav{margin-top:auto;border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:10px 6px 14px;background:var(--paper)}
+.nav div{text-align:center;font-size:10px;letter-spacing:.06em;color:var(--muted)}
+.nav .on{color:var(--seed);font-weight:700}
+.nav i{font-style:normal;font-size:18px;display:block}
+.read{padding:14px 18px;line-height:1.95;font-size:13.5px;color:#2B2E30}
+.read h3{font-family:"Cormorant Garamond",serif;font-size:22px;line-height:1.2;margin-bottom:10px}
+.hl{background:rgba(59,110,165,.13);border-bottom:2px solid rgba(59,110,165,.35);border-radius:3px;padding:0 2px;font-weight:600;color:#23415F}
+.sheet{background:var(--card);border-top:1px solid var(--line);border-radius:20px 20px 0 0;padding:16px;box-shadow:0 -12px 30px rgba(0,0,0,.06)}
+.sheet h4{font-family:"Noto Serif SC",serif;font-size:18px}
+.phon{font-size:12px;color:var(--muted);font-family:Inter}
+.pos{font-size:11px;background:var(--seed);color:#fff;padding:2px 7px;border-radius:999px;margin-left:6px}
+.def{font-size:13px;line-height:1.6;margin-top:8px}
+.def b{font-weight:700}
+.actions{display:flex;gap:8px;margin-top:14px}
+.btn{flex:1;text-align:center;font-size:12px;font-weight:600;padding:10px;border-radius:999px;border:1px solid var(--line);background:#fff}
+.btn.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.flash{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 18px;text-align:center}
+.bigword{font-family:"Cormorant Garamond",serif;font-size:48px;font-weight:700;letter-spacing:-1px}
+.bigphon{color:var(--muted);font-size:13px;margin-top:4px}
+.bigdef{margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;width:100%;text-align:left}
+.row3{display:flex;gap:8px;margin-top:16px;width:100%}
+.row3 span{flex:1;padding:11px;border-radius:999px;text-align:center;font-size:12px;font-weight:700;border:1px solid var(--line)}
+.row3 .a{background:var(--seed);color:#fff;border-color:var(--seed)}
+.row3 .b{background:#fff}
+.row3 .c{background:var(--ink);color:#fff}
+.stats{padding:16px}
+.kpi{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpi div{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px}
+.kpi b{font-size:22px;font-family:"Cormorant Garamond",serif}
+.kpi p{font-size:11px;color:var(--muted);letter-spacing:.06em;margin-top:2px}
+.chart{margin-top:14px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px}
+.bar{display:flex;align-items:end;gap:6px;height:64px;margin-top:10px}
+.bar i{flex:1;background:var(--seed);border-radius:6px 6px 0 0;display:block;opacity:.9}
+.bar i:nth-child(2){opacity:.55;height:70%!important}
+.bar i:nth-child(3){opacity:.75}
+.bar i:nth-child(5){opacity:.5}
+.label{font-size:10px;letter-spacing:.1em;color:var(--muted);font-weight:600}
+</style>
+</head>
+<body>
+<div class="top">
+  <div>
+    <h1>A · 纸感文学 <span>PAPER EDITORIAL</span></h1>
+    <p>暖纸 #FAF8F5 × 油墨文字 × 衬线标题。卡片纯白 0 阴影，单一蓝高亮只为词服务。像一本长期放在桌面的文学期刊。</p>
+  </div>
+  <a class="back" href="index.html">← 返回 6 选 1</a>
+</div>
+
+<div class="phones">
+  <!-- 1 内容列表 -->
+  <div class="phone">
+    <div class="p-head"><span>9:41</span><span>◐ ◑ ◒</span></div>
+    <div class="p-appbar"><div><small>GOSLOW</small><h2>内容</h2></div><div class="icon">＋</div></div>
+    <div class="search">⌕ &nbsp;搜索标题 / 词 · 7 本内容</div>
+    <div class="section"><span>最近阅读</span><span style="color:var(--seed)">全部 ›</span></div>
+    <div class="card">
+      <h3>The Great Gatsby — Chapter 3</h3>
+      <p>“He smiled understandingly — much more than understandingly...”</p>
+      <div class="meta"><i>G K 考研</i><i>2,341 词</i></div>
+      <div class="progress"><em style="width:62%"></em></div>
+    </div>
+    <div class="card">
+      <h3>附：歌词 · Blinding Lights</h3>
+      <p style="color:var(--ink)">I’ve been tryna call — highligh 已就绪</p>
+      <div class="meta"><i>LRC</i><i>147 词 · 12 高亮</i></div>
+    </div>
+    <div class="section"><span>为你推荐</span></div>
+    <div class="card" style="display:flex;gap:12px;align-items:center">
+      <div style="width:44px;height:44px;border-radius:12px;background:var(--seed-soft);display:grid;place-items:center;color:var(--seed)">✦</div>
+      <div><h3 style="font-size:13px">今日一段 · 粘贴即高亮</h3><p>任意英文段落，自动标出考纲词</p></div>
+    </div>
+    <div class="nav"><div class="on"><i>◐</i>内容</div><div><i>⬔</i>闪卡</div><div><i>☆</i>收藏</div><div><i>⚙</i>设置</div></div>
+  </div>
+
+  <!-- 2 阅读高亮 -->
+  <div class="phone">
+    <div class="p-head"><span>9:41</span><span>纸感 · 单色高亮</span></div>
+    <div class="p-appbar"><div style="display:flex;gap:10px;align-items:center"><span style="width:28px;height:28px;border-radius:999px;border:1px solid var(--line);display:grid;place-items:center">‹</span><div><small>THE GREAT GATSBY</small><h2 style="font-size:15px">Chapter 3</h2></div></div><span style="font-size:12px;color:var(--muted)">Aa</span></div>
+    <div class="read">
+      <h3>Chapter 3 — The Party</h3>
+      He smiled <span class="hl">understandingly</span> — much more than understandingly. It was one of those rare smiles with a quality of <span class="hl">eternal</span> reassurance in it, that you may come across four or five times in life. It <span class="hl">vanished</span>, and I was looking at an <span class="hl">elegant</span> young rough-neck...
+      <div style="margin-top:14px;font-size:11px;letter-spacing:.1em;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">CET-6 高亮 · 12 词 · 点击看释义</div>
+    </div>
+    <div class="sheet">
+      <div style="width:36px;height:4px;background:var(--line);border-radius:999px;margin:0 auto 12px"></div>
+      <div style="display:flex;justify-content:space-between;align-items:start"><div><h4>eternal <span class="pos">adj.</span></h4><div class="phon">/ɪˈtɜːnl/ · 考研 / 雅思</div></div><span style="font-size:18px">🔊</span></div>
+      <div class="def"><b>永恒的；无尽的</b> · lasting or existing forever; without end.<br><span style="color:var(--muted);font-size:12px">“...with a quality of eternal reassurance...” — 来自当前句</span></div>
+      <div class="actions"><span class="btn">☆ 收藏</span><span class="btn on">加入闪卡</span><span class="btn">认识了</span></div>
+    </div>
+  </div>
+
+  <!-- 3 闪卡 -->
+  <div class="phone">
+    <div class="p-head"><span>9:41</span><span>认识优先 · 无讲解</span></div>
+    <div class="p-appbar"><div><small>FLASHCARD</small><h2>闪卡 · 12 / 20</h2></div><span style="font-size:12px;border:1px solid var(--line);padding:6px 10px;border-radius:999px">设置</span></div>
+    <div style="margin:8px 16px;background:var(--line);height:6px;border-radius:999px;overflow:hidden"><em style="display:block;width:60%;height:100%;background:var(--seed)"></em></div>
+    <div class="flash">
+      <div class="bigword">vanish</div>
+      <div class="bigphon">/ˈvænɪʃ/ · vi.</div>
+      <div class="bigdef"><b>消失；突然不见</b><br><span style="color:var(--muted);font-size:12px">disappear suddenly and completely</span><br><span style="font-size:12px;color:var(--muted);margin-top:6px;display:block">原句：It vanished, and I was looking at...</span></div>
+      <div class="row3"><span class="a">认识 ✓</span><span class="b">模糊</span><span class="c">不认识</span></div>
+      <div style="margin-top:12px;font-size:11px;color:var(--muted)">翻面仅有释义，无语法拆解</div>
+    </div>
+    <div class="nav"><div><i>◐</i>内容</div><div class="on"><i>⬔</i>闪卡</div><div><i>☆</i>收藏</div><div><i>⚙</i>设置</div></div>
+  </div>
+
+  <!-- 4 统计 -->
+  <div class="phone">
+    <div class="p-head"><span>9:41</span><span>收获感 · 非打卡</span></div>
+    <div class="p-appbar"><div><small>PROGRESS</small><h2>收获</h2></div><span style="font-size:18px">◯</span></div>
+    <div class="stats">
+      <div class="kpi"><div><b>1,247</b><p>累计认识 · CET-6</p></div><div><b>38.2h</b><p>沉浸时长</p></div></div>
+      <div class="chart">
+        <div class="label">本周认识 · 7 天</div>
+        <div class="bar"><i style="height:38px"></i><i style="height:44px"></i><i style="height:56px"></i><i style="height:62px"></i><i style="height:40px"></i><i style="height:50px"></i><i style="height:46px"></i></div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:6px"><span>Mon</span><span>Sun</span></div>
+      </div>
+      <div class="card" style="margin:12px 0 0">
+        <div class="label">掌握分布 · CET-6</div>
+        <div style="display:flex;gap:6px;margin-top:10px"><i style="flex:3;background:var(--seed);height:8px;border-radius:999px;display:block"></i><i style="flex:1;background:#E0D9D0;height:8px;border-radius:999px;display:block"></i><i style="flex:2;background:var(--line);height:8px;border-radius:999px;display:block"></i></div>
+        <div style="display:flex;gap:12px;margin-top:8px;font-size:11px;color:var(--muted)"><span>● 认识 54%</span><span>● 模糊 18%</span><span>● 未处理 28%</span></div>
+      </div>
+      <div class="card" style="margin:10px 0 0;background:var(--seed);color:#fff;border-color:var(--seed)"><h3 style="color:#fff">🎉 读完一本书结算</h3><p style="color:rgba(255,255,255,.85)">The Great Gatsby · 新认识 23 词 · 去分享</p></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
