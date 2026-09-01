@@ -5,6 +5,7 @@ import '../dict/syllabus.dart';
 import '../models/review_event.dart';
 import '../models/review_outcome.dart';
 import '../models/srs_card_state.dart';
+import '../models/word_review_stats.dart';
 import '../models/word_state.dart';
 import '../srs/fsrs_calculator.dart';
 
@@ -164,6 +165,38 @@ class WordStateRepository {
     return rows.map(ReviewEvent.fromRow).toList();
   }
 
+  /// 该词的累计自评统计（出现过几次 + 认识 / 模糊 / 不认识分布）。
+  Future<WordReviewStats> reviewStatsOf(String word) async {
+    final db = await _db.database;
+    final rows = await db.rawQuery(
+      'SELECT rating, COUNT(*) AS c FROM review_events WHERE word = ? GROUP BY rating',
+      [word.toLowerCase()],
+    );
+    var known = 0;
+    var familiar = 0;
+    var unknown = 0;
+    for (final r in rows) {
+      final rating = FsrsRatingX.fromDb(r['rating'] as int);
+      final c = (r['c'] as int?) ?? 0;
+      switch (rating) {
+        case FsrsRating.good:
+        case FsrsRating.easy:
+          known += c;
+        case FsrsRating.hard:
+          familiar += c;
+        case FsrsRating.again:
+          unknown += c;
+      }
+    }
+    final total = known + familiar + unknown;
+    return WordReviewStats(
+      total: total,
+      known: known,
+      familiar: familiar,
+      unknown: unknown,
+    );
+  }
+
   /// 组装一轮闪卡：先复习（FSRS 到期卡），再补新词。
   ///
   /// [candidateNew] 提供候选新词（按调用方偏好排序，如考纲词）；为空时
@@ -171,15 +204,18 @@ class WordStateRepository {
   ///
   /// known 词的语义随 FSRS 变化：已认识但**已到期**的词仍进入复习池
   ///（低频抽查），未到期的 known 才跳过。
+  ///
+  /// [reviewOnly] = 只复习到期卡（不学新词）；[newOnly] = 只学新词（不复习）。
   Future<List<String>> flashcardDeck({
     int sessionSize = 10,
     List<String>? candidateNew,
     int? now,
     bool reviewOnly = false,
+    bool newOnly = false,
   }) async {
     final db = await _db.database;
     final timestamp = now ?? DateTime.now().millisecondsSinceEpoch;
-    final review = await reviewQueue(now: timestamp);
+    final review = newOnly ? const <String>[] : await reviewQueue(now: timestamp);
     final dueSet = review.toSet();
     final knownSet = (await _knownSet(db))..removeAll(dueSet);
     final fresh = candidateNew ?? await _queueWords(db);

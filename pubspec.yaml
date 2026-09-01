@@ -38,3 +38,8 @@ flutter:
 
   assets:
     - assets/dict.db
+
+  fonts:
+    - family: LXGW WenKai
+      fonts:
+        - asset: assets/fonts/LXGWWenKai-Regular.ttf

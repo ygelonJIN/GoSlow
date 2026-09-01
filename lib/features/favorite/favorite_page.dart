@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/design/design.dart';
+import '../../app/theme/fold_decoration.dart';
+import '../../app/theme/mode_theme.dart';
 import '../../data/dict/dict_providers.dart';
 import '../../data/models/srs_card_state.dart';
 import '../../data/models/word_entry.dart';
 import '../../data/providers/app_providers.dart';
 import '../../data/services/tts_service.dart';
 import '../../shared/empty_state.dart';
+import '../../shared/feedback_dialog.dart';
 import '../../shared/meaning_card.dart';
 
 class FavoritePage extends ConsumerWidget {
@@ -35,7 +38,7 @@ class FavoritePage extends ConsumerWidget {
           return Padding(
             padding: EdgeInsets.only(
               top: AppOverlay.topInset(context),
-              bottom: AppOverlay.bottomInset(context),
+              bottom: AppOverlay.bottomInset(context) + AppSpacing.xl,
             ),
             child: const EmptyState(
               icon: Icons.star_outline,
@@ -65,11 +68,16 @@ class _FavList extends ConsumerWidget {
     return ListView(
       padding: EdgeInsets.only(
         top: AppOverlay.topInset(context),
-        bottom: AppOverlay.bottomInset(context),
+        bottom: AppOverlay.bottomInset(context) + AppSpacing.xl,
       ),
       children: [
         Padding(
-          padding: AppInsets.sectionHeader,
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.xl,
+            0,
+            AppSpacing.xl,
+            AppSpacing.sm,
+          ),
           child: Text(
             '${favKeys.length} 个收藏',
             style: Theme.of(context).textTheme.labelLarge
@@ -92,11 +100,16 @@ class _FavListSimple extends ConsumerWidget {
     return ListView(
       padding: EdgeInsets.only(
         top: AppOverlay.topInset(context),
-        bottom: AppOverlay.bottomInset(context),
+        bottom: AppOverlay.bottomInset(context) + AppSpacing.xl,
       ),
       children: [
         Padding(
-          padding: AppInsets.sectionHeader,
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.xl,
+            0,
+            AppSpacing.xl,
+            AppSpacing.sm,
+          ),
           child: Text(
             '${favKeys.length} 个收藏',
             style: Theme.of(context).textTheme.labelLarge
@@ -196,8 +209,12 @@ class _FavThumb extends ConsumerWidget {
                     await repo.toggleFavorite(word);
                     ref.read(wordStateVersionProvider.notifier).state++;
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context)
-                          .showSnackBar(const SnackBar(content: Text('已取消收藏')));
+                      FeedbackDialog.show(
+                        context,
+                        message: '已取消收藏',
+                        icon: Icons.star_border_rounded,
+                        title: '已取消',
+                      );
                     }
                   },
                 ),
@@ -215,15 +232,25 @@ class _FavThumb extends ConsumerWidget {
     String word,
     WordEntry? entry,
   ) {
+    const mode = ModeThemes.love;
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.card,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
-        side: BorderSide(color: AppColors.line),
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => CutBox(
+        fold: mode.cornerFold,
+        color: mode.cardBackground,
+        borderRadius: BorderRadius.vertical(top: mode.cardRadius.topLeft),
+        border: Border.all(color: mode.cardBorder, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.10),
+            blurRadius: 24,
+            offset: const Offset(0, -6),
+          ),
+        ],
+        child: _FavFullSheet(word: word, entry: entry),
       ),
-      builder: (ctx) => _FavFullSheet(word: word, entry: entry),
     );
   }
 }

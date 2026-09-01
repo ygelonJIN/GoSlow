@@ -1,26 +1,25 @@
 import 'package:flutter/material.dart';
 
 import 'design/design.dart';
+import 'theme/fold_decoration.dart';
+import 'theme/mode_theme.dart';
 
-/// GoSlow 主题——唯一真相源（Paper Editorial v2.0）。
+/// GoSlow 主题——唯一真相源（暖纸底 + 草木绿主色 + 全圆角）。
 ///
-/// 全部颜色 / 间距 / 圆角 / 阴影均引用 `lib/app/design` 的 Token，
-/// 详见 `docs/design-spec.md`。页面层禁止出现 `Color(0x...)` / 裸数值。
+/// 全部颜色 / 圆角 / 阴影均由 `ModeThemes.love` 令牌驱动，
+/// 页面层禁止出现 `Color(0x...)` / 裸数值。详见 `docs/design-spec.md`。
 class AppTheme {
   AppTheme._();
 
+  static ModeTheme get love => ModeThemes.love;
   static const Color seed = AppColors.seed;
   static const Color highlight = AppColors.highlight;
 
   static ThemeData light() {
-    final scheme = ColorScheme.fromSeed(
-      seedColor: AppColors.seed,
-      brightness: Brightness.light,
-    );
-    return ThemeData(
-      useMaterial3: true,
-      colorScheme: scheme,
-      scaffoldBackgroundColor: AppColors.paper,
+    const mode = ModeThemes.love;
+    final base = mode.themeData;
+    final scheme = base.colorScheme;
+    return base.copyWith(
       textTheme: _textTheme(scheme),
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.paper,
@@ -35,32 +34,17 @@ class AppTheme {
           letterSpacing: -0.3,
         ),
       ),
-      navigationBarTheme: NavigationBarThemeData(
-        // 透明背景：底部导航作为浮层直接压在渐隐遮罩之上。
-        backgroundColor: Colors.transparent,
-        surfaceTintColor: Colors.transparent,
-        indicatorColor: scheme.primary.withValues(
-          alpha: AppColors.alphaIndicator,
-        ),
-        elevation: AppElevation.level0,
-        height: AppSpacing.navHeight,
-        labelTextStyle: WidgetStateProperty.resolveWith((states) {
-          final selected = states.contains(WidgetState.selected);
-          return TextStyle(
-            fontSize: 10,
-            letterSpacing: 0.06 * 10,
-            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-            color: selected ? scheme.primary : AppColors.inkMuted,
-          );
-        }),
-      ),
       cardTheme: CardThemeData(
-        elevation: AppElevation.level0,
+        // SoWhat 卡片语言：cardBackground 底 + cardBorder 绿描边 +
+        // 柔和阴影。
+        elevation: 2,
         color: AppColors.card,
-        shadowColor: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          side: const BorderSide(color: AppColors.line),
+        shadowColor: Colors.black.withValues(alpha: mode.cardShadowAlpha),
+        surfaceTintColor: Colors.transparent,
+        shape: FoldShape(
+          borderRadius: mode.cardRadius,
+          fold: mode.cornerFold,
+          side: BorderSide(color: mode.cardBorder, width: 1),
         ),
         margin: const EdgeInsets.symmetric(
           horizontal: AppSpacing.lg,
@@ -69,8 +53,17 @@ class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+          backgroundColor: mode.actionChipBackground,
+          foregroundColor: mode.actionChipForeground,
+          disabledBackgroundColor: mode.actionChipBackground.withValues(
+            alpha: 0.38,
+          ),
+          elevation: 0,
+          shadowColor: Colors.transparent,
+          shape: FoldShape(
+            borderRadius: mode.chipRadius,
+            fold: mode.cornerFold,
+            side: BorderSide.none,
           ),
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.xl,
@@ -78,45 +71,112 @@ class AppTheme {
           ),
         ),
       ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: mode.chipForeground,
+          backgroundColor: mode.chipBackground,
+          side: BorderSide(color: mode.chipBorder.withValues(alpha: 0.55)),
+          shape: FoldShape(
+            borderRadius: mode.chipRadius,
+            fold: mode.cornerFold,
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: mode.primary,
+          shape: FoldShape(
+            borderRadius: mode.chipRadius,
+            fold: mode.cornerFold,
+          ),
+        ),
+      ),
       chipTheme: ChipThemeData(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.xs),
+        shape: FoldShape(
+          borderRadius: mode.chipRadius,
+          fold: mode.cornerFold,
         ),
         side: BorderSide.none,
-        backgroundColor: scheme.primary.withValues(
-          alpha: AppColors.alphaSubtle,
-        ),
+        backgroundColor: mode.primary.withValues(alpha: AppColors.alphaSubtle),
         labelStyle: TextStyle(
-          color: scheme.primary,
+          color: mode.primary,
           fontSize: 11,
           fontWeight: FontWeight.w500,
         ),
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxs),
       ),
       inputDecorationTheme: InputDecorationTheme(
+        // SoWhat 输入条语言：chipBackground 底 + chipBorder 55% 描边 + 全圆角。
         filled: true,
-        fillColor: AppColors.card,
-        hintStyle: const TextStyle(color: AppColors.inkMuted, fontSize: 13),
-        prefixIconColor: AppColors.inkMuted,
-        suffixIconColor: AppColors.inkMuted,
+        fillColor: mode.chipBackground,
+        hintStyle: TextStyle(color: mode.textMuted, fontSize: 13),
+        prefixIconColor: mode.textMuted,
+        suffixIconColor: mode.textMuted,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm2),
-          borderSide: const BorderSide(color: AppColors.line),
+          borderRadius: mode.inputRadius,
+          borderSide: BorderSide(
+            color: mode.chipBorder.withValues(alpha: 0.55),
+          ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm2),
-          borderSide: const BorderSide(color: AppColors.line),
+          borderRadius: mode.inputRadius,
+          borderSide: BorderSide(
+            color: mode.chipBorder.withValues(alpha: 0.55),
+          ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm2),
-          borderSide: BorderSide(color: scheme.primary.withValues(alpha: 0.35)),
+          borderRadius: mode.inputRadius,
+          borderSide: BorderSide(color: mode.primary.withValues(alpha: 0.75)),
         ),
         contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
       ),
-      dividerTheme: const DividerThemeData(
-        color: AppColors.line,
+      dividerTheme: DividerThemeData(
+        color: mode.textMuted.withValues(alpha: 0.25),
         space: 1,
         thickness: 1,
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return mode.primary;
+          return mode.cardBackground;
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return mode.primary.withValues(alpha: 0.35);
+          }
+          return AppColors.line;
+        }),
+        trackOutlineColor: WidgetStateProperty.resolveWith(
+          (_) => Colors.transparent,
+        ),
+      ),
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: ButtonStyle(
+          backgroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return mode.primary.withValues(alpha: 0.16);
+            }
+            return Colors.transparent;
+          }),
+          foregroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) return mode.primary;
+            return mode.textMuted;
+          }),
+          side: WidgetStatePropertyAll(
+            BorderSide(color: mode.cardBorder, width: 1),
+          ),
+          shape: WidgetStatePropertyAll(
+            FoldShape(
+              borderRadius: mode.chipRadius,
+              fold: mode.cornerFold,
+            ),
+          ),
+        ),
+      ),
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: mode.primary,
+        linearTrackColor: AppColors.line,
+        circularTrackColor: AppColors.line,
       ),
       listTileTheme: const ListTileThemeData(
         contentPadding: AppInsets.listTile,

@@ -7,6 +7,7 @@ import '../dict/syllabus.dart';
 import '../models/milestone.dart';
 import '../models/review_stats.dart';
 import '../models/word_entry.dart';
+import '../models/word_review_stats.dart';
 import '../models/word_state.dart';
 import '../repositories/content_repository.dart';
 import '../repositories/milestone_repository.dart';
@@ -119,6 +120,13 @@ final flashcardEntryProvider = FutureProvider.family<LookupResult?, String>((ref
   return ref.watch(lookupProvider).lookup(word);
 });
 
+/// 单个单词的自评历史统计（闪卡学习页 / 点词面板复用）。
+final wordReviewStatsProvider = FutureProvider.family<WordReviewStats, String>((ref, word) async {
+  ref.watch(wordStateVersionProvider);
+  final repo = ref.watch(wordStateRepoProvider);
+  return repo.reviewStatsOf(word);
+});
+
 /// 闪卡入口：内容词（队列） / 考纲词（当前考纲）。
 enum FlashcardSource { content, syllabus }
 
@@ -180,18 +188,6 @@ class SyllabusStats {
   int get fresh => total - known - review;
 }
 
-/// 考纲词牌堆（一轮）。
-final syllabusDeckProvider = FutureProvider.autoDispose<List<String>>((ref) async {
-  ref.watch(wordStateVersionProvider);
-  final repo = ref.watch(wordStateRepoProvider);
-  final words = ref.watch(syllabusWordsProvider);
-  final settings = ref.watch(flashcardSettingsProvider);
-  return repo.flashcardDeck(
-    sessionSize: settings.sessionSize,
-    candidateNew: [for (final w in words) w.word.toLowerCase()],
-  );
-});
-
 /// 内容词：导入的所有内容中出现过的考纲词（去重，按出现顺序稳定）。
 ///
 /// 不需要手动"加入学习"——只要内容里出现过、属于当前考纲，就会自动
@@ -236,21 +232,9 @@ final contentWordsStatsProvider = Provider<SyllabusStats>((ref) {
   return SyllabusStats(total: words.length, known: known, review: review);
 });
 
-/// 闪卡模式：学习（复习 + 新词）/ 复习（只到期旧卡）。
+/// 闪卡模式：学习（只学新词）/ 复习（只复习到期旧卡）。
 enum FlashcardMode { learn, review }
 
 final flashcardModeProvider = StateProvider<FlashcardMode>((ref) {
   return FlashcardMode.learn;
-});
-
-/// 内容词牌堆（一轮）：先复习到期卡，再补内容里的新词。
-final contentDeckProvider = FutureProvider.autoDispose<List<String>>((ref) async {
-  ref.watch(wordStateVersionProvider);
-  final repo = ref.watch(wordStateRepoProvider);
-  final words = await ref.watch(contentWordsProvider.future);
-  final settings = ref.watch(flashcardSettingsProvider);
-  return repo.flashcardDeck(
-    sessionSize: settings.sessionSize,
-    candidateNew: words,
-  );
 });

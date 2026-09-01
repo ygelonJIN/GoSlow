@@ -18,4 +18,17 @@ abstract final class AppSpacing {
 
   /// 卡片前置头像内图标尺寸（规范 §10）。
   static const double cardIcon = 22;
+
+  // ---- 胶囊按钮（PillButton / SegmentedPills 等全局统一）----
+  /// 胶囊按钮垂直内边距：所有胶囊控件（收藏 / 添加 / 底部导航 / 分段选择）一致。
+  static const double pillVertical = 10;
+
+  /// 胶囊按钮水平内边距（普通态）。
+  static const double pillHorizontal = 16;
+
+  /// 胶囊按钮图标与文字间距。
+  static const double pillGap = 6;
+
+  /// 胶囊按钮文字字号。
+  static const double pillFontSize = 13.5;
 }

@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/design/design.dart';
+import '../../app/theme/fold_decoration.dart';
+import '../../app/theme/mode_theme.dart';
 import '../../data/dict/dict_database.dart';
 import '../../data/dict/dict_providers.dart';
 import '../../data/models/word_entry.dart';
 import '../../shared/empty_state.dart';
 import '../../shared/meaning_card.dart';
+import '../../shared/overlay_page.dart';
 
-/// 离线查词页 v2.0 — Paper Editorial。
-/// 纸底 + 14px 圆角 1px 描边搜索框 + 细线分隔建议列表。
+/// 离线查词页 — 全局主题。
+/// 全屏内容 + 浮层控制：胶囊搜索框 + 细线分隔建议列表。
 class DictLookupPage extends ConsumerStatefulWidget {
   const DictLookupPage({super.key, this.initialQuery});
 
@@ -86,30 +89,57 @@ class _DictLookupPageState extends ConsumerState<DictLookupPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('查单词')),
-      body: Column(
+    const mode = ModeThemes.love;
+    return OverlayPage(
+      title: '查单词',
+      child: Column(
         children: [
           Padding(
-            padding: AppInsets.search,
-            child: TextField(
-              controller: _controller,
-              onChanged: _onChanged,
-              onSubmitted: _submit,
-              autofocus: widget.initialQuery == null,
-              textInputAction: TextInputAction.search,
-              decoration: InputDecoration(
-                hintText: '输入英文单词，支持变形词（如 got）',
-                prefixIcon: const Icon(Icons.search, size: 18),
-                suffixIcon: _controller.text.isEmpty
-                    ? null
-                    : IconButton(
-                        icon: const Icon(Icons.clear, size: 18),
-                        onPressed: () {
-                          _controller.clear();
-                          _onChanged('');
-                        },
-                      ),
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppOverlay.topInset(context),
+              AppSpacing.lg,
+              AppSpacing.sm,
+            ),
+            child: Material(
+              color: mode.chipBackground,
+              shape: FoldShape(
+                borderRadius: mode.inputRadius,
+                side: BorderSide(
+                  color: mode.chipBorder.withValues(alpha: 0.55),
+                  width: 1,
+                ),
+                fold: mode.cornerFold,
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: TextField(
+                controller: _controller,
+                onChanged: _onChanged,
+                onSubmitted: _submit,
+                autofocus: widget.initialQuery == null,
+                textInputAction: TextInputAction.search,
+                style: TextStyle(color: mode.text, fontSize: 14),
+                cursorColor: mode.primary,
+                onTapOutside: (_) => FocusScope.of(context).unfocus(),
+                decoration: InputDecoration(
+                  hintText: '输入英文单词，支持变形词（如 got）',
+                  hintStyle: TextStyle(color: mode.textMuted, fontSize: 13),
+                  filled: false,
+                  prefixIcon: Icon(Icons.search, size: 18, color: mode.textMuted),
+                  suffixIcon: _controller.text.isEmpty
+                      ? null
+                      : IconButton(
+                          icon: Icon(Icons.clear, size: 18, color: mode.textMuted),
+                          onPressed: () {
+                            _controller.clear();
+                            _onChanged('');
+                          },
+                        ),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                ),
               ),
             ),
           ),
@@ -130,9 +160,11 @@ class _DictLookupPageState extends ConsumerState<DictLookupPage> {
     }
     if (_result case final r?) {
       return ListView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.sm,
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.sm,
+          AppSpacing.lg,
+          AppOverlay.bottomInset(context),
         ),
         children: [
           MeaningCard(

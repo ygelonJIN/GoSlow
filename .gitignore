@@ -30,4 +30,4 @@ android/local.properties
 
 # 用户数据备份
 *.backup
-*.bak
+*.bak.sdk/

@@ -1,7 +1,6 @@
 import 'package:flutter/widgets.dart';
 
 import 'app_colors.dart';
-import 'app_spacing.dart';
 
 /// 全屏浮层 Token（Paper Editorial §16 新增）。
 ///
@@ -9,17 +8,19 @@ import 'app_spacing.dart';
 /// 顶部标题栏与底部导航作为浮层直接压在渐变之上（对齐 SoWhat 全屏页模式：
 /// 内容 → 上下渐变遮罩 → 顶部浮层 → 底部浮层）。
 abstract final class AppOverlay {
-  /// 顶部渐隐遮罩高度：内容滚入标题浮层下方时柔和淡出。
-  static const double topFadeHeight = 160;
+  /// 顶部渐隐遮罩高度：与顶部内容避让（[topContentInset]）同高，
+  /// 内容滚入标题浮层下方时柔和淡出。
+  static const double topFadeHeight = 170;
 
-  /// 底部渐隐遮罩高度：内容滚入导航浮层下方时柔和淡出。
+  /// 底部渐隐遮罩高度：与底部内容避让（[bottomContentInset]）同高，
+  /// 内容滚入导航浮层下方时柔和淡出。
   static const double bottomFadeHeight = 180;
 
   /// 顶部标题浮层内容避让（不含状态栏安全区）。
   static const double topContentInset = 88;
 
-  /// 底部导航浮层内容避让（不含底部安全区）：导航高 + 浮起余量。
-  static const double bottomContentInset = AppSpacing.navHeight + AppSpacing.lg;
+  /// 底部导航浮层内容避让（不含底部安全区）：PillButton 高（~54）+ 浮起余量。
+  static const double bottomContentInset = 70;
 
   /// 页面内容顶部避让：状态栏 + 顶部浮层。
   static double topInset(BuildContext context) =>

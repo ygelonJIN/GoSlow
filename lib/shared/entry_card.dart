@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../app/design/design.dart';
 
-/// 列表入口卡片 v2.0（Paper Editorial）。
-///
-/// 纯白卡 + 1px line 描边 + seedSoft 图标底，对齐预览 A 圆角 16 / 内距 20·16。
+/// 列表入口卡片：浅草绿卡 + 1px 描边 + 主色图标底（可选），全圆角卡片语言。
 class EntryCard extends StatelessWidget {
   const EntryCard({
     super.key,
-    required this.icon,
+    this.icon,
     required this.title,
     required this.subtitle,
     this.enabled = true,
@@ -16,7 +14,7 @@ class EntryCard extends StatelessWidget {
     this.onTap,
   });
 
-  final IconData icon;
+  final IconData? icon;
   final String title;
   final String subtitle;
   final bool enabled;
@@ -31,14 +29,16 @@ class EntryCard extends StatelessWidget {
       child: ListTile(
         enabled: enabled,
         onTap: enabled ? onTap : null,
-        leading: CircleAvatar(
-          radius: 20,
-          backgroundColor: enabled
-              ? AppColors.seedSoft
-              : AppColors.line.withValues(alpha: AppColors.alphaSurface),
-          foregroundColor: enabled ? scheme.primary : AppColors.inkMuted,
-          child: Icon(icon, size: AppSpacing.cardIcon),
-        ),
+        leading: icon == null
+            ? null
+            : CircleAvatar(
+                radius: 20,
+                backgroundColor: enabled
+                    ? AppColors.seedSoft
+                    : AppColors.line.withValues(alpha: AppColors.alphaSurface),
+                foregroundColor: enabled ? scheme.primary : AppColors.inkMuted,
+                child: Icon(icon, size: AppSpacing.cardIcon),
+              ),
         title: Text(
           title,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(

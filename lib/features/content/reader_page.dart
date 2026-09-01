@@ -7,6 +7,7 @@ import '../../data/dict/highlight_engine.dart';
 import '../../data/models/content_entry.dart';
 import '../../data/parsers/parsed_content.dart';
 import '../../data/providers/app_providers.dart';
+import '../../shared/overlay_page.dart';
 import 'widgets/highlighted_text.dart';
 import 'widgets/word_sheet.dart';
 
@@ -35,29 +36,10 @@ class ReaderPage extends ConsumerWidget {
     final engineAsync = ref.watch(highlightEngineProvider);
     final knownWords = ref.watch(knownWordsProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              content.displaySource,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: AppColors.inkMuted,
-                    letterSpacing: 0.12 * 11,
-                  ),
-            ),
-            Text(
-              content.title,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 16),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      ),
-      body: engineAsync.when(
+    return OverlayPage(
+      title: content.title,
+      kicker: content.displaySource,
+      child: engineAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
           child: Padding(
@@ -123,11 +105,11 @@ class ReaderPage extends ConsumerWidget {
     );
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
         AppSpacing.lg,
-        AppSpacing.md,
+        AppOverlay.topInset(context),
         AppSpacing.lg,
-        AppSpacing.xl2,
+        AppOverlay.bottomInset(context) + AppSpacing.xl,
       ),
       children: [
         infoBar,
@@ -188,11 +170,11 @@ class ReaderPage extends ConsumerWidget {
     final perPara = _sliceSpans(paras, visibleSpans);
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
         AppSpacing.lg,
-        AppSpacing.md,
+        AppOverlay.topInset(context),
         AppSpacing.lg,
-        AppSpacing.xl2,
+        AppOverlay.bottomInset(context) + AppSpacing.xl,
       ),
       children: [
         Container(

@@ -6,9 +6,11 @@ import '../../app/design/design.dart';
 import '../../data/models/milestone.dart';
 import '../../data/models/review_stats.dart';
 import '../../data/providers/app_providers.dart';
+import '../../shared/feedback_dialog.dart';
+import '../../shared/overlay_page.dart';
 import '../../shared/section_header.dart';
 
-/// 里程碑庆祝页（M4）— 见 docs/design-spec.md §13。
+/// 里程碑庆祝页（M4）— 全局主题下的收获仪式。
 ///
 /// 整页纸感：accent 暖金徽章 + display 大标题 + 达成数据 + 收获总结 +
 /// 分享卡。无撒花动效，靠大留白完成仪式感。触发点：
@@ -24,24 +26,10 @@ class CelebrationPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(reviewStatsProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'MILESTONE',
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: AppColors.accent,
-                    letterSpacing: 0.12 * 11,
-                  ),
-            ),
-            Text('庆祝', style: Theme.of(context).textTheme.titleLarge),
-          ],
-        ),
-      ),
-      body: statsAsync.when(
+    return OverlayPage(
+      title: '庆祝',
+      kicker: 'MILESTONE',
+      child: statsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
           child: Padding(
@@ -66,9 +54,11 @@ class _CelebrationView extends StatelessWidget {
     final next = _nextThreshold(threshold);
 
     return ListView(
-      padding: AppInsets.pageVertical,
+      padding: EdgeInsets.only(
+        top: AppOverlay.topInset(context),
+        bottom: AppOverlay.bottomInset(context) + AppSpacing.xl,
+      ),
       children: [
-        const SizedBox(height: AppSpacing.xl),
         // 里程碑徽章（§13：accent 前景 + accent 0.13 底）。
         Center(
           child: Container(
@@ -240,8 +230,11 @@ class _CelebrationView extends StatelessWidget {
 
     await Clipboard.setData(ClipboardData(text: text));
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('分享文案已复制')),
+      FeedbackDialog.show(
+        context,
+        message: '分享文案已复制',
+        icon: Icons.check_circle_rounded,
+        title: '已复制',
       );
     }
   }
@@ -269,9 +262,25 @@ class _MiniStat extends StatelessWidget {
     return Expanded(
       child: Column(
         children: [
-          Text(value, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppColors.ink)),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.fade,
+            softWrap: false,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: AppColors.ink,
+              fontSize: 13,
+            ),
+          ),
           const SizedBox(height: 2),
-          Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.inkMuted, fontSize: 11)),
+          Text(
+            label,
+            maxLines: 1,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColors.inkMuted,
+              fontSize: 10,
+            ),
+          ),
         ],
       ),
     );
@@ -287,24 +296,10 @@ class MilestonesPage extends ConsumerWidget {
     final achievedAsync = ref.watch(achievedMilestonesProvider);
     final known = ref.watch(knownWordsProvider).length;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'MILESTONE',
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: AppColors.inkMuted,
-                    letterSpacing: 0.12 * 11,
-                  ),
-            ),
-            Text('里程碑', style: Theme.of(context).textTheme.titleLarge),
-          ],
-        ),
-      ),
-      body: achievedAsync.when(
+    return OverlayPage(
+      title: '里程碑',
+      kicker: 'MILESTONE',
+      child: achievedAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
           child: Padding(
@@ -315,9 +310,17 @@ class MilestonesPage extends ConsumerWidget {
         data: (achieved) {
           final next = _firstUpreached(known);
           return ListView(
-            padding: AppInsets.pageVertical,
+            padding: EdgeInsets.only(
+              top: AppOverlay.topInset(context),
+              bottom: AppOverlay.bottomInset(context) + AppSpacing.xl,
+            ),
             children: [
-              const SectionHeader('进行中'),
+              const SectionHeader('进行中', padding: EdgeInsets.fromLTRB(
+                AppSpacing.xl,
+                0,
+                AppSpacing.xl,
+                AppSpacing.sm,
+              )),
               _NextMilestoneCard(known: known, next: next),
               const SectionHeader('已庆祝'),
               if (achieved.isEmpty)

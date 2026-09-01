@@ -4,38 +4,31 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/design/design.dart';
 import '../../data/dict/dict_providers.dart';
 import '../../data/models/word_entry.dart';
-import '../../data/providers/app_providers.dart';
 import '../../features/celebration/celebration_page.dart';
 import '../../features/stats/stats_page.dart';
 import '../../shared/entry_card.dart';
 import '../../shared/section_header.dart';
+import '../../shared/segmented_pills.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentTag = ref.watch(examTagProvider);
     final highlightMode = ref.watch(highlightModeProvider);
-    final knownCount = ref.watch(knownWordsProvider).length;
-    final contentWordsAsync = ref.watch(contentWordsProvider);
-    final favCount = ref.watch(favoriteWordSetProvider).length;
 
     return ListView(
       padding: EdgeInsets.only(
         top: AppOverlay.topInset(context),
-        bottom: AppOverlay.bottomInset(context),
+        bottom: AppOverlay.bottomInset(context) + AppSpacing.xl,
       ),
       children: [
-        const SectionHeader('学习'),
-        EntryCard(
-          icon: Icons.filter_alt_outlined,
-          title: '当前考纲',
-          subtitle: currentTag == kAllTag
-              ? '全部考纲'
-              : (kExamTagNames[currentTag] ?? currentTag),
-          onTap: () => _pickExamTag(context, ref, currentTag),
-        ),
+        const SectionHeader('学习', padding: EdgeInsets.fromLTRB(
+          AppSpacing.xl,
+          0,
+          AppSpacing.xl,
+          AppSpacing.sm,
+        )),
         EntryCard(
           icon: Icons.bar_chart_outlined,
           title: '统计',
@@ -93,22 +86,22 @@ class SettingsPage extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: AppSpacing.md),
-                SegmentedButton<HighlightMode>(
-                  segments: const [
-                    ButtonSegment(
+                SegmentedPills<HighlightMode>(
+                  items: const [
+                    SegmentedPillItem(
                       value: HighlightMode.single,
-                      label: Text('单色'),
-                      icon: Icon(Icons.circle, size: 14),
+                      label: '单色',
+                      icon: Icons.circle,
                     ),
-                    ButtonSegment(
+                    SegmentedPillItem(
                       value: HighlightMode.multi,
-                      label: Text('多色'),
-                      icon: Icon(Icons.palette_outlined, size: 14),
+                      label: '多色',
+                      icon: Icons.palette_outlined,
                     ),
                   ],
-                  selected: {highlightMode},
-                  onSelectionChanged: (s) {
-                    ref.read(highlightModeProvider.notifier).state = s.first;
+                  selected: highlightMode,
+                  onChanged: (v) {
+                    ref.read(highlightModeProvider.notifier).state = v;
                   },
                 ),
                 if (highlightMode == HighlightMode.multi) ...[
@@ -146,34 +139,6 @@ class SettingsPage extends ConsumerWidget {
             ),
           ),
         ),
-        Card(
-          child: Padding(
-            padding: AppInsets.card,
-            child: Row(
-              children: [
-                _MiniStat(label: '已认识', value: '$knownCount'),
-                Container(
-                  width: 1,
-                  height: 28,
-                  color: AppColors.line,
-                  margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                ),
-                _MiniStat(label: '收藏', value: '$favCount'),
-                Container(
-                  width: 1,
-                  height: 28,
-                  color: AppColors.line,
-                  margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                ),
-                contentWordsAsync.when(
-                  data: (w) => _MiniStat(label: '内容词', value: '${w.length}'),
-                  loading: () => const _MiniStat(label: '内容词', value: '—'),
-                  error: (_, _) => const _MiniStat(label: '内容词', value: '—'),
-                ),
-              ],
-            ),
-          ),
-        ),
         const SectionHeader('关于'),
         const EntryCard(
           icon: Icons.backup_outlined,
@@ -195,97 +160,6 @@ class SettingsPage extends ConsumerWidget {
           ),
         ),
       ],
-    );
-  }
-
-  Future<void> _pickExamTag(
-    BuildContext context,
-    WidgetRef ref,
-    String current,
-  ) async {
-    final picked = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      backgroundColor: AppColors.card,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
-      ),
-      builder: (ctx) {
-        return SafeArea(
-          child: ListView(
-            shrinkWrap: true,
-            children: [
-              Padding(
-                padding: AppInsets.sectionHeader.copyWith(
-                  bottom: AppSpacing.sm,
-                ),
-                child: Text(
-                  '选择当前考纲',
-                  style: Theme.of(ctx).textTheme.titleMedium
-                      ?.copyWith(color: AppColors.ink),
-                ),
-              ),
-              ListTile(
-                title: const Text(
-                  '全部考纲',
-                  style: TextStyle(color: AppColors.ink),
-                ),
-                trailing: current == kAllTag
-                    ? Icon(
-                        Icons.check,
-                        color: Theme.of(ctx).colorScheme.primary,
-                      )
-                    : null,
-                onTap: () => Navigator.pop(ctx, kAllTag),
-              ),
-              for (final tag in kExamTags)
-                ListTile(
-                  title: Text(
-                    kExamTagNames[tag] ?? tag,
-                    style: const TextStyle(color: AppColors.ink),
-                  ),
-                  trailing: current == tag
-                      ? Icon(
-                          Icons.check,
-                          color: Theme.of(ctx).colorScheme.primary,
-                        )
-                      : null,
-                  onTap: () => Navigator.pop(ctx, tag),
-                ),
-            ],
-          ),
-        );
-      },
-    );
-    if (picked != null) {
-      ref.read(examTagProvider.notifier).state = picked;
-    }
-  }
-}
-
-class _MiniStat extends StatelessWidget {
-  const _MiniStat({required this.label, required this.value});
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: Theme.of(context).textTheme.titleMedium
-                ?.copyWith(color: AppColors.ink),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall
-                ?.copyWith(color: AppColors.inkMuted, fontSize: 11),
-          ),
-        ],
-      ),
     );
   }
 }

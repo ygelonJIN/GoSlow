@@ -6,11 +6,12 @@ import '../../data/models/review_stats.dart';
 import '../../data/models/srs_card_state.dart';
 import '../../data/models/word_state.dart';
 import '../../data/providers/app_providers.dart';
+import '../../shared/overlay_page.dart';
 import '../../shared/section_header.dart';
 
 /// 统计页（M4）：全部指标从 review_events 事件表聚合。
 ///
-/// 版面遵循 Paper Editorial：纸底 + 纯白卡片 + 1px 线框 + 单色表达，
+/// 版面遵循全局主题：暖纸底 + 浅草绿卡片 + 1px 线框 + 单色表达，
 /// 无游戏化动效。曲线用等宽竖条表达"认识率"趋势（不引入图表依赖）。
 class StatsPage extends ConsumerWidget {
   const StatsPage({super.key});
@@ -19,24 +20,10 @@ class StatsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(reviewStatsProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'STATS',
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: AppColors.inkMuted,
-                    letterSpacing: 0.12 * 11,
-                  ),
-            ),
-            Text('统计', style: Theme.of(context).textTheme.titleLarge),
-          ],
-        ),
-      ),
-      body: statsAsync.when(
+    return OverlayPage(
+      title: '统计',
+      kicker: 'STATS',
+      child: statsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
           child: Padding(
@@ -58,9 +45,17 @@ class _StatsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: AppInsets.pageVertical,
+      padding: EdgeInsets.only(
+        top: AppOverlay.topInset(context),
+        bottom: AppOverlay.bottomInset(context) + AppSpacing.xl,
+      ),
       children: [
-        const SectionHeader('总览'),
+        const SectionHeader('总览', padding: EdgeInsets.fromLTRB(
+          AppSpacing.xl,
+          0,
+          AppSpacing.xl,
+          AppSpacing.sm,
+        )),
         Card(
           child: Padding(
             padding: AppInsets.card,
@@ -99,7 +94,10 @@ class _StatsView extends StatelessWidget {
           ),
         ],
         if (stats.monthlySeries.isNotEmpty) ...[
-          const SectionHeader('月度汇总'),
+          const SectionHeader('月度总结'),
+          const _PeriodCaption(
+            text: '该月自评总次数 · 认识率 = 点「认识」的次数 ÷ 全部自评',
+          ),
           Card(
             child: Padding(
               padding: AppInsets.card,
@@ -115,7 +113,10 @@ class _StatsView extends StatelessWidget {
           ),
         ],
         if (stats.yearlySeries.isNotEmpty) ...[
-          const SectionHeader('年度汇总'),
+          const SectionHeader('年度总结'),
+          const _PeriodCaption(
+            text: '该年自评总次数 · 认识率 = 点「认识」的次数 ÷ 全部自评',
+          ),
           Card(
             child: Padding(
               padding: AppInsets.card,
@@ -229,6 +230,32 @@ class _StatsView extends StatelessWidget {
   }
 }
 
+/// 月度/年度汇总行的说明小字。
+class _PeriodCaption extends StatelessWidget {
+  const _PeriodCaption({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.xl,
+        0,
+        AppSpacing.xl,
+        AppSpacing.xs,
+      ),
+      child: Text(
+        text,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: AppColors.inkMuted,
+          fontSize: 10.5,
+        ),
+      ),
+    );
+  }
+}
+
 /// 月度/年度汇总行：周期名 + 认识率条 + 自评次数与百分比。
 class _PeriodRow extends StatelessWidget {
   const _PeriodRow({required this.point});
@@ -241,7 +268,16 @@ class _PeriodRow extends StatelessWidget {
       children: [
         SizedBox(
           width: 64,
-          child: Text(point.label, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.ink)),
+          child: Text(
+            point.label,
+            maxLines: 1,
+            overflow: TextOverflow.fade,
+            softWrap: false,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColors.ink,
+              fontSize: 11.5,
+            ),
+          ),
         ),
         Expanded(
           child: ClipRRect(
@@ -256,11 +292,17 @@ class _PeriodRow extends StatelessWidget {
         ),
         const SizedBox(width: AppSpacing.md),
         SizedBox(
-          width: 96,
+          width: 104,
           child: Text(
             '${point.reviews}次 · ${(point.goodRate * 100).round()}%',
+            maxLines: 1,
+            overflow: TextOverflow.fade,
+            softWrap: false,
             textAlign: TextAlign.right,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.inkMuted),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColors.inkMuted,
+              fontSize: 10.5,
+            ),
           ),
         ),
       ],
@@ -330,13 +372,13 @@ class _StatLine extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: Text(label, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.ink)),
+              child: Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.ink, fontSize: 12)),
             ),
-            Text(value, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppColors.ink)),
+            Text(value, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.ink, fontSize: 13, fontWeight: FontWeight.w600)),
           ],
         ),
         const SizedBox(height: AppSpacing.xs),
-        Text(note, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.inkMuted)),
+        Text(note, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.inkMuted, fontSize: 10.5)),
       ],
     );
   }
@@ -429,9 +471,25 @@ class _MiniStat extends StatelessWidget {
     return Expanded(
       child: Column(
         children: [
-          Text(value, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppColors.ink)),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.fade,
+            softWrap: false,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: AppColors.ink,
+              fontSize: 13,
+            ),
+          ),
           const SizedBox(height: 2),
-          Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.inkMuted, fontSize: 11)),
+          Text(
+            label,
+            maxLines: 1,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColors.inkMuted,
+              fontSize: 10,
+            ),
+          ),
         ],
       ),
     );

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../app/design/design.dart';
 
-/// 空状态 v2.0 — 纸感：56 图标 + titleMedium + muted 说明，节奏 16 / 6 / 20。
+/// 空状态：56 图标 + titleMedium + muted 说明。
 class EmptyState extends StatelessWidget {
   const EmptyState({
     super.key,
@@ -25,7 +25,19 @@ class EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: AppSpacing.emptyIcon, color: AppColors.line),
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: AppColors.seedSoft.withValues(alpha: AppColors.alphaSoft),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                size: AppSpacing.emptyIcon,
+                color: AppColors.inkMuted,
+              ),
+            ),
             const SizedBox(height: AppSpacing.lg),
             Text(
               title,
@@ -40,6 +52,7 @@ class EmptyState extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.inkMuted,
+                      height: 1.6,
                     ),
               ),
             ],
