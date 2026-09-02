@@ -25,6 +25,8 @@ class ContentRepository {
       'source_type': sourceType,
       'created_at': DateTime.now().millisecondsSinceEpoch,
       'sections': encodeSections(sections),
+      'last_opened_at': null,
+      'completed_at': null,
     });
   }
 
@@ -45,6 +47,28 @@ class ContentRepository {
     await db.update(
       'contents',
       {'last_opened_at': DateTime.now().millisecondsSinceEpoch},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  /// 标记内容已学完。
+  Future<void> markCompleted(int id) async {
+    final db = await _db.database;
+    await db.update(
+      'contents',
+      {'completed_at': DateTime.now().millisecondsSinceEpoch},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  /// 取消「已学完」标记。
+  Future<void> clearCompleted(int id) async {
+    final db = await _db.database;
+    await db.update(
+      'contents',
+      {'completed_at': null},
       where: 'id = ?',
       whereArgs: [id],
     );

@@ -29,6 +29,32 @@ abstract final class AppSpacing {
   /// 胶囊按钮图标与文字间距。
   static const double pillGap = 6;
 
+  /// 胶囊按钮 / 分段选择器图标尺寸。
+  static const double pillIcon = 16;
+
   /// 胶囊按钮文字字号。
   static const double pillFontSize = 13.5;
+
+  // ---- 强调主按钮（学习 / 复习等页级 CTA）----
+  /// 主按钮垂直内边距（与 FilledButton 主题一致）。
+  static const double primaryButtonVertical = 14;
+
+  /// 主按钮水平内边距（同 AppSpacing.xl）。
+  static const double primaryButtonHorizontal = 20;
+
+  /// 主按钮图标尺寸。
+  static const double primaryButtonIcon = 18;
+
+  /// 主按钮文字字号。
+  static const double primaryButtonFontSize = 15;
+
+  /// 统计数字文字字号（总览 / 词数 / 掌握数等数据值：略小于标题，避免大数字撑破卡片）。
+  static const double statFontSize = 13;
+
+  // ---- 阅读正文（阅读器长文 / 高亮段落）----
+  /// 阅读正文字号。
+  static const double readingFontSize = 15;
+
+  /// 阅读正文行高。
+  static const double readingLineHeight = 26;
 }

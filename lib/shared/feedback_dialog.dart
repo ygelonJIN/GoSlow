@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../app/design/app_radius.dart';
+import '../app/design/app_spacing.dart';
 import '../app/theme/fold_decoration.dart';
 import '../app/theme/mode_theme.dart';
 
@@ -22,7 +24,7 @@ class FeedbackDialog {
   }) {
     _open(
       context,
-      mode ?? ModeThemes.love,
+      mode ?? ModeThemes.theme1,
       icon: icon,
       title: title,
       body: message,
@@ -42,7 +44,7 @@ class FeedbackDialog {
   }) {
     _open(
       context,
-      mode ?? ModeThemes.love,
+      mode ?? ModeThemes.theme1,
       icon: Icons.error_outline,
       title: title,
       body: message,
@@ -99,7 +101,12 @@ class _FeedbackDialog extends StatelessWidget {
       elevation: 0,
       child: CutBox(
         width: 292,
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.xl,
+          AppSpacing.xl,
+          AppSpacing.xl,
+          AppSpacing.lg,
+        ),
         fold: mode.cornerFold,
         color: mode.cardBackground,
         borderRadius: mode.cardRadius,
@@ -124,31 +131,28 @@ class _FeedbackDialog extends StatelessWidget {
                   height: 34,
                   decoration: BoxDecoration(
                     color: mode.primary.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   child: Icon(icon, size: 17, color: mode.primary),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: AppSpacing.md),
                 Text(
                   title,
-                  style: TextStyle(
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: mode.cardTitle,
-                    fontSize: 16,
-                    fontWeight: mode.strongWeight,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.md),
             Text(
               body,
-              style: TextStyle(
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: mode.cardMuted,
-                fontSize: 12,
                 height: 1.5,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
@@ -158,8 +162,8 @@ class _FeedbackDialog extends StatelessWidget {
                 },
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 10,
+                    horizontal: AppSpacing.pillHorizontal,
+                    vertical: AppSpacing.pillVertical,
                   ),
                   shape: FoldShape(
                     borderRadius: mode.chipRadius,
@@ -168,10 +172,8 @@ class _FeedbackDialog extends StatelessWidget {
                 ),
                 child: Text(
                   actionLabel ?? '知道了',
-                  style: TextStyle(
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
                     color: mode.primary,
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),

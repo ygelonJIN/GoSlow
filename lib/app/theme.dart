@@ -6,21 +6,25 @@ import 'theme/mode_theme.dart';
 
 /// GoSlow 主题——唯一真相源（暖纸底 + 草木绿主色 + 全圆角）。
 ///
-/// 全部颜色 / 圆角 / 阴影均由 `ModeThemes.love` 令牌驱动，
+/// 全部颜色 / 圆角 / 阴影均由 `ModeThemes.theme1` 令牌驱动，
 /// 页面层禁止出现 `Color(0x...)` / 裸数值。详见 `docs/design-spec.md`。
 class AppTheme {
   AppTheme._();
 
-  static ModeTheme get love => ModeThemes.love;
+  static ModeTheme get theme1 => ModeThemes.theme1;
   static const Color seed = AppColors.seed;
   static const Color highlight = AppColors.highlight;
 
   static ThemeData light() {
-    const mode = ModeThemes.love;
+    const mode = ModeThemes.theme1;
     final base = mode.themeData;
     final scheme = base.colorScheme;
     return base.copyWith(
-      textTheme: _textTheme(scheme),
+      textTheme: _textTheme(
+        scheme,
+        fontFamily: mode.fontFamily,
+        fontFamilyFallback: mode.fontFamilyFallback,
+      ),
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.paper,
         foregroundColor: AppColors.ink,
@@ -66,8 +70,13 @@ class AppTheme {
             side: BorderSide.none,
           ),
           padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.xl,
-            vertical: 14,
+            horizontal: AppSpacing.primaryButtonHorizontal,
+            vertical: AppSpacing.primaryButtonVertical,
+          ),
+          iconSize: AppSpacing.primaryButtonIcon,
+          textStyle: const TextStyle(
+            fontSize: AppSpacing.primaryButtonFontSize,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
@@ -184,57 +193,80 @@ class AppTheme {
     );
   }
 
-  static TextTheme _textTheme(ColorScheme scheme) {
+  static TextTheme _textTheme(
+    ColorScheme scheme, {
+    String? fontFamily,
+    List<String> fontFamilyFallback = const <String>[],
+  }) {
     const ink = AppColors.ink;
     const muted = AppColors.inkMuted;
+    TextStyle style({
+      required double fontSize,
+      required double height,
+      required FontWeight fontWeight,
+      required Color color,
+      double? letterSpacing,
+    }) {
+      return TextStyle(
+        fontFamily: fontFamily,
+        fontFamilyFallback: fontFamilyFallback,
+        fontSize: fontSize,
+        height: height / fontSize,
+        fontWeight: fontWeight,
+        color: color,
+        letterSpacing: letterSpacing,
+      );
+    }
+
     return TextTheme(
-      headlineMedium: const TextStyle(
+      headlineMedium: style(
         fontSize: 28,
-        height: 32 / 28,
+        height: 32,
         fontWeight: FontWeight.w700,
         color: ink,
         letterSpacing: -0.5,
       ),
-      titleLarge: const TextStyle(
+      titleLarge: style(
         fontSize: 20,
+        height: 20,
         fontWeight: FontWeight.w600,
         color: ink,
         letterSpacing: -0.3,
       ),
-      titleMedium: const TextStyle(
+      titleMedium: style(
         fontSize: 16,
-        height: 22 / 16,
+        height: 22,
         fontWeight: FontWeight.w600,
         color: ink,
       ),
-      bodyLarge: TextStyle(
+      bodyLarge: style(
         fontSize: 14,
-        height: 21 / 14,
-        fontWeight: FontWeight.w400,
-        color: scheme.primary,
-      ),
-      bodyMedium: const TextStyle(
-        fontSize: 14,
-        height: 21 / 14,
+        height: 21,
         fontWeight: FontWeight.w400,
         color: ink,
       ),
-      bodySmall: const TextStyle(
+      bodyMedium: style(
+        fontSize: 14,
+        height: 21,
+        fontWeight: FontWeight.w400,
+        color: ink,
+      ),
+      bodySmall: style(
         fontSize: 12,
-        height: 18 / 12,
+        height: 18,
         fontWeight: FontWeight.w400,
         color: muted,
       ),
-      labelLarge: const TextStyle(
+      labelLarge: style(
         fontSize: 13,
-        height: 16 / 13,
+        height: 16,
         fontWeight: FontWeight.w600,
         color: muted,
         letterSpacing: 0.08 * 13,
       ),
-      labelSmall: const TextStyle(
+      labelSmall: style(
         fontSize: 11,
-        height: 14 / 11,
+        height: 14,
         fontWeight: FontWeight.w500,
         color: muted,
         letterSpacing: 0.04 * 11,

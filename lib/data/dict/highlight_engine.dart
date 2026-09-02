@@ -51,8 +51,9 @@ class HighlightEngine {
 
   /// 对 [text] 执行高亮，返回高亮区间列表。
   ///
-  /// [examTag] 可选，如果指定则只高亮属于该考纲的词；null 表示高亮所有。
-  List<HighlightSpan> highlight(String text, {String? examTag}) {
+  /// [examTags] 可选：不为 null 时只高亮词条考纲标签命中任一 tag 的词；
+  /// null 表示不按考纲过滤（全部）。空集合时不高亮任何词。
+  List<HighlightSpan> highlight(String text, {Set<String>? examTags}) {
     final tokens = _tokenize(text);
     if (tokens.isEmpty) return [];
 
@@ -72,7 +73,7 @@ class HighlightEngine {
             .join(' ');
 
         // 匹配词组
-        final phraseEntry = _matchPhrase(phrase, examTag);
+        final phraseEntry = _matchPhrase(phrase, examTags);
         if (phraseEntry != null) {
           final start = tokens[i].start;
           final end = tokens[i + len - 1].end;
@@ -90,7 +91,7 @@ class HighlightEngine {
 
         // 单词匹配（只在 len == 1 时处理）
         if (len == 1) {
-          final entry = _matchSingle(tokens[i], examTag);
+          final entry = _matchSingle(tokens[i], examTags);
           if (entry != null) {
             spans.add(HighlightSpan(
               start: tokens[i].start,
@@ -110,12 +111,12 @@ class HighlightEngine {
   }
 
   /// 匹配单词：先原型，再 lemma_map。
-  WordEntry? _matchSingle(TokenSpan token, String? examTag) {
+  WordEntry? _matchSingle(TokenSpan token, Set<String>? examTags) {
     final key = token.text.toLowerCase();
     // 原型命中
     final entry = index.words[key];
     if (entry != null) {
-      if (examTag == null || entry.hasTag(examTag)) return entry;
+      if (_matchTags(entry, examTags)) return entry;
       return null;
     }
     // 词形还原
@@ -123,18 +124,27 @@ class HighlightEngine {
     if (lemma != null) {
       final lemmaEntry = index.words[lemma];
       if (lemmaEntry != null) {
-        if (examTag == null || lemmaEntry.hasTag(examTag)) return lemmaEntry;
+        if (_matchTags(lemmaEntry, examTags)) return lemmaEntry;
       }
     }
     return null;
   }
 
   /// 匹配词组（含空格）。
-  WordEntry? _matchPhrase(String phrase, String? examTag) {
+  WordEntry? _matchPhrase(String phrase, Set<String>? examTags) {
     final entry = index.phrases[phrase];
     if (entry == null) return null;
-    if (examTag == null || entry.hasTag(examTag)) return entry;
+    if (_matchTags(entry, examTags)) return entry;
     return null;
+  }
+
+  /// 考纲过滤：null = 不过滤；否则词条需命中任一选中的考纲标签。
+  bool _matchTags(WordEntry entry, Set<String>? examTags) {
+    if (examTags == null) return true;
+    for (final t in entry.tags) {
+      if (examTags.contains(t)) return true;
+    }
+    return false;
   }
 
   /// 分词：按非字母数字字符切分，保留每个 token 的起止偏移。

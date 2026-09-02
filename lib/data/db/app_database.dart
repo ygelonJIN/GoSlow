@@ -25,7 +25,7 @@ class AppDatabase {
     return db;
   }
 
-  /// 建表脚本（V1-V7，ALTER 型迁移均幂等可重入），测试与运行时共用。
+  /// 建表脚本（V1-V8，ALTER 型迁移均幂等可重入），测试与运行时共用。
   static Future<void> createSchema(Database db) async {
     await _createV1(db);
     await _createV2(db);
@@ -34,6 +34,7 @@ class AppDatabase {
     await _createV5(db);
     await _createV6(db);
     await _createV7(db);
+    await _createV8(db);
   }
 
   /// 按旧版本号执行增量迁移（onUpgrade 与测试共用）。
@@ -44,6 +45,7 @@ class AppDatabase {
     if (oldVersion < 5) await _createV5(db);
     if (oldVersion < 6) await _createV6(db);
     if (oldVersion < 7) await _createV7(db);
+    if (oldVersion < 8) await _createV8(db);
   }
 
   Future<Database> _open() async {
@@ -52,7 +54,7 @@ class AppDatabase {
     final dbPath = p.join(dir.path, 'app.db');
     final db = await openDatabase(
       dbPath,
-      version: 7,
+      version: 8,
       onCreate: (db, _) => createSchema(db),
       onUpgrade: (db, oldVersion, _) => upgrade(db, oldVersion),
     );
@@ -101,14 +103,6 @@ class AppDatabase {
   }
 
   /// M3.5：FSRS 调度 + 事件溯源。
-  ///
-  /// 1. `word_states` 增加 SRS 字段（stability/difficulty/retrievability/
-  ///    next_review_at/last_review_at/fail_count），调度从"连续计数"升级为
-  ///    FSRS v4 间隔调度（见 `lib/data/srs/fsrs_calculator.dart`）。
-  /// 2. 新增 `review_events` 事件表：每次自评落一条"操作前快照 + 操作后结果"，
-  ///    供统计聚合（评级分布/掌握度曲线）与撤销（undo）使用，保证可追溯。
-  /// 3. 存量数据回填：旧库里的 learning/familiar/known 卡无 SRS 字段，
-  ///    统一按"立即到期"排期，让其在下一次闪卡中进入新调度。
   static Future<void> _createV4(Database db) async {
     if (!await _hasColumn(db, 'word_states', 'stability')) {
       await db.execute('''
@@ -151,16 +145,16 @@ class AppDatabase {
       CREATE TABLE IF NOT EXISTS review_events (
         id                  INTEGER PRIMARY KEY AUTOINCREMENT,
         word                TEXT NOT NULL,
-        rating              INTEGER NOT NULL,   -- 1 again / 2 hard / 3 good / 4 easy
-        created_at          INTEGER NOT NULL,   -- 自评时间（UTC 毫秒）
+        rating              INTEGER NOT NULL,
+        created_at          INTEGER NOT NULL,
 
-        pre_status          INTEGER NOT NULL,   -- 操作前 SRS 状态快照（撤销用）
+        pre_status          INTEGER NOT NULL,
         pre_stability       REAL NOT NULL,
         pre_difficulty      REAL NOT NULL,
-        pre_retrievability  REAL NOT NULL,
+        pre_retrievability   REAL NOT NULL,
         pre_next_review_at  INTEGER NOT NULL,
 
-        post_status         INTEGER NOT NULL,   -- 操作后 SRS 状态
+        post_status         INTEGER NOT NULL,
         post_stability      REAL NOT NULL,
         post_difficulty     REAL NOT NULL,
         post_retrievability REAL NOT NULL,
@@ -176,9 +170,6 @@ class AppDatabase {
         ON review_events(created_at)
     ''');
 
-    // 存量回填：已处理但无 SRS 字段的词按当前时间立即到期，
-    // 保持旧掌握度标签（status 不变），并给 SRS 基线（S=1、D=5），
-    // 避免旧数据以 stability=0 进入调度导致间隔异常。
     final now = DateTime.now().millisecondsSinceEpoch;
     await db.execute('''
       UPDATE word_states
@@ -204,10 +195,6 @@ class AppDatabase {
   }
 
   /// M5：contents 增加结构化分节（JSON 字符串）。
-  ///
-  /// 旧内容（paste/txt/md）无分节；epub 分章节、srt/lrc 分时间轴行。
-  /// 正文仍保留在 `body`（列表字数/阅读兜底用），分节用于阅读器的
-  /// 章节导航 / 时间轴浏览。
   static Future<void> _createV6(Database db) async {
     if (!await _hasColumn(db, 'contents', 'sections')) {
       await db.execute('''
@@ -217,14 +204,7 @@ class AppDatabase {
     }
   }
 
-  /// SQLite 无 `ADD COLUMN IF NOT EXISTS`，查 `PRAGMA table_info` 判断列是否已存在，
-  /// 保证 ALTER 型迁移可重入（上次迁移中断后重跑不会报 duplicate column）。
-  static Future<bool> _hasColumn(Database db, String table, String column) async {
-    final rows = await db.rawQuery('PRAGMA table_info($table)');
-    return rows.any((r) => r['name'] == column);
-  }
-
-  /// M6 预留 / 本次 M5 交互改版：contents 记录最近打开时间（最近阅读排序用）。
+  /// M5 交互改版：contents 记录最近打开时间（最近阅读排序用）。
   static Future<void> _createV7(Database db) async {
     if (!await _hasColumn(db, 'contents', 'last_opened_at')) {
       await db.execute('''
@@ -232,6 +212,21 @@ class AppDatabase {
           ADD COLUMN last_opened_at INTEGER
       ''');
     }
+  }
+
+  /// M5.1：contents 记录“已学完”时间，用于内容完成庆祝。
+  static Future<void> _createV8(Database db) async {
+    if (!await _hasColumn(db, 'contents', 'completed_at')) {
+      await db.execute('''
+        ALTER TABLE contents
+          ADD COLUMN completed_at INTEGER
+      ''');
+    }
+  }
+
+  static Future<bool> _hasColumn(Database db, String table, String column) async {
+    final rows = await db.rawQuery('PRAGMA table_info($table)');
+    return rows.any((r) => r['name'] == column);
   }
 
   Future<void> close() async {

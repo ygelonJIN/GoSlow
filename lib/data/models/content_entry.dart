@@ -12,6 +12,7 @@ class ContentEntry {
     required this.createdAt,
     this.sections = const [],
     this.lastOpenedAt,
+    this.completedAt,
   });
 
   final int id;
@@ -23,11 +24,17 @@ class ContentEntry {
   /// 最近打开（阅读）时间；从未打开过为 null。
   final DateTime? lastOpenedAt;
 
+  /// 学完当前内容的时间；从未点“已学完”为 null。
+  final DateTime? completedAt;
+
   /// 结构化分节（epub 章节 / srt/lrc 时间轴行），旧内容为空。
   final List<ContentSection> sections;
 
   /// 是否有结构化分节（阅读器按章节/时间轴渲染）。
   bool get hasSections => sections.isNotEmpty;
+
+  /// 是否已手动标记“已学完”。
+  bool get isCompleted => completedAt != null;
 
   int get wordCount => body.trim().isEmpty ? 0 : body.trim().split(RegExp(r'\s+')).length;
 
@@ -53,6 +60,7 @@ class ContentEntry {
   factory ContentEntry.fromRow(Map<String, Object?> row) {
     final sectionsJson = row['sections'] as String?;
     final lastOpened = row['last_opened_at'] as int?;
+    final completedAt = row['completed_at'] as int?;
     return ContentEntry(
       id: (row['id'] as int?) ?? 0,
       title: (row['title'] as String?) ?? '',
@@ -61,6 +69,7 @@ class ContentEntry {
       createdAt: DateTime.fromMillisecondsSinceEpoch((row['created_at'] as int?) ?? 0),
       sections: decodeSections(sectionsJson),
       lastOpenedAt: lastOpened == null ? null : DateTime.fromMillisecondsSinceEpoch(lastOpened),
+      completedAt: completedAt == null ? null : DateTime.fromMillisecondsSinceEpoch(completedAt),
     );
   }
 
@@ -72,6 +81,7 @@ class ContentEntry {
       'created_at': createdAt.millisecondsSinceEpoch,
       'sections': encodeSections(sections),
       'last_opened_at': lastOpenedAt?.millisecondsSinceEpoch,
+      'completed_at': completedAt?.millisecondsSinceEpoch,
     };
   }
 
@@ -81,6 +91,8 @@ class ContentEntry {
     String? body,
     String? sourceType,
     List<ContentSection>? sections,
+    DateTime? lastOpenedAt,
+    DateTime? completedAt,
   }) {
     return ContentEntry(
       id: id ?? this.id,
@@ -89,6 +101,8 @@ class ContentEntry {
       sourceType: sourceType ?? this.sourceType,
       createdAt: createdAt,
       sections: sections ?? this.sections,
+      lastOpenedAt: lastOpenedAt ?? this.lastOpenedAt,
+      completedAt: completedAt ?? this.completedAt,
     );
   }
 }

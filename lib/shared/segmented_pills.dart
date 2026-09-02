@@ -28,7 +28,7 @@ class SegmentedPills<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const theme = ModeThemes.love;
+    const theme = ModeThemes.theme1;
     return Row(
       children: [
         for (var i = 0; i < items.length; i++) ...[
@@ -106,7 +106,7 @@ class _PillItem<T> extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (item.icon != null) ...[
-                Icon(item.icon, size: 16, color: foreground),
+                Icon(item.icon, size: AppSpacing.pillIcon, color: foreground),
                 const SizedBox(width: AppSpacing.pillGap),
               ],
               Flexible(

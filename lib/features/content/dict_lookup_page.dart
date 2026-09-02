@@ -89,7 +89,7 @@ class _DictLookupPageState extends ConsumerState<DictLookupPage> {
 
   @override
   Widget build(BuildContext context) {
-    const mode = ModeThemes.love;
+    const mode = ModeThemes.theme1;
     return OverlayPage(
       title: '查单词',
       child: Column(

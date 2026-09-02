@@ -7,8 +7,9 @@ import '../../app/theme/mode_theme.dart';
 import '../../data/providers/app_providers.dart';
 import '../../shared/feedback_dialog.dart';
 import '../../shared/overlay_page.dart';
+import 'reader_page.dart';
 
-/// 粘贴文本导入页：标题 + 正文，保存后回到内容列表/直接打开阅读器由调用方决定。
+/// 粘贴文本导入页：标题 + 正文，保存后会弹出已保存提示，再自动打开阅读器。
 /// 全屏内容 + 浮层控制：底部通栏主色「保存」按钮悬浮在渐变之上。
 class PastePage extends ConsumerStatefulWidget {
   const PastePage({super.key});
@@ -45,8 +46,25 @@ class _PastePageState extends ConsumerState<PastePage> {
       );
       ref.read(contentVersionProvider.notifier).state++;
       if (!mounted) return;
-      Navigator.of(context).pop<int>(id);
-      FeedbackDialog.show(context, message: '已保存，去阅读吧', icon: Icons.check_circle_rounded, title: '已保存');
+
+      // Fetch the newly created content
+      final content = await repo.byId(id);
+      if (!mounted || content == null) return;
+
+      final shouldOpen =
+          await showDialog<bool>(
+                context: context,
+                builder: (_) => const _SavedDialog(),
+              ) ??
+          true;
+
+      if (!mounted || !shouldOpen) return;
+      Navigator.of(context).pop();
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => ReaderPage(content: content),
+        ),
+      );
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -54,7 +72,7 @@ class _PastePageState extends ConsumerState<PastePage> {
 
   @override
   Widget build(BuildContext context) {
-    const mode = ModeThemes.love;
+    const mode = ModeThemes.theme1;
     return OverlayPage(
       title: '粘贴文本',
       bottomBar: Padding(
@@ -112,7 +130,11 @@ class _SaveButton extends StatelessWidget {
     final foreground = mode.actionChipForeground;
     return Material(
       color: saving ? mode.primary.withValues(alpha: 0.7) : mode.primary,
-      shape: FoldShape(borderRadius: mode.chipRadius, fold: mode.cornerFold),
+      shape: FoldShape(
+        borderRadius: mode.chipRadius,
+        fold: mode.cornerFold,
+        side: BorderSide.none,
+      ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         borderRadius: mode.cornerFold ? null : mode.chipRadius,
@@ -125,32 +147,129 @@ class _SaveButton extends StatelessWidget {
             : null,
         onTap: saving ? null : onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 14),
+          padding: const EdgeInsets.symmetric(
+            vertical: AppSpacing.primaryButtonVertical,
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (saving)
                 SizedBox(
-                  width: 15,
-                  height: 15,
+                  width: AppSpacing.primaryButtonIcon,
+                  height: AppSpacing.primaryButtonIcon,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
                     color: foreground,
                   ),
                 )
               else
-                Icon(Icons.check_rounded, size: 18, color: foreground),
-              const SizedBox(width: 7),
+                Icon(
+                  Icons.check_rounded,
+                  size: AppSpacing.primaryButtonIcon,
+                  color: foreground,
+                ),
+              const SizedBox(width: AppSpacing.pillGap),
               Text(
                 saving ? '保存中…' : '保存',
                 style: TextStyle(
                   color: foreground,
-                  fontSize: 15,
+                  fontSize: AppSpacing.primaryButtonFontSize,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 已保存提示弹窗：自动关闭并打开阅读器。
+class _SavedDialog extends StatelessWidget {
+  const _SavedDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    const mode = ModeThemes.theme1;
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      child: CutBox(
+        width: 292,
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.xl,
+          AppSpacing.xl,
+          AppSpacing.xl,
+          AppSpacing.lg,
+        ),
+        fold: mode.cornerFold,
+        color: mode.cardBackground,
+        borderRadius: mode.cardRadius,
+        border: Border.all(color: mode.cardBorder, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(
+              alpha: (mode.cardShadowAlpha + 0.08).clamp(0, 1),
+            ),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+        ],
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: mode.primary.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+              ),
+              child: Icon(
+                Icons.check_circle_rounded,
+                size: 26,
+                color: mode.primary,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              '已保存',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: mode.cardTitle,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              '去阅读高亮内容',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: mode.cardMuted,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.pillHorizontal,
+                    vertical: AppSpacing.pillVertical,
+                  ),
+                  shape: FoldShape(
+                    borderRadius: mode.chipRadius,
+                    fold: mode.cornerFold,
+                  ),
+                ),
+                child: Text(
+                  '去阅读',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: mode.primary,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

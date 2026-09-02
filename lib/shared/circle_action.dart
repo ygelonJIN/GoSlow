@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../app/design/design.dart';
+import '../app/design/app_radius.dart';
+import '../app/design/app_spacing.dart';
 import '../app/theme/mode_theme.dart';
 
 /// 圆形图标按钮：主色底圆 + 纸色图标。
@@ -15,18 +16,18 @@ class CircleAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = mode ?? ModeThemes.love;
+    final theme = mode ?? ModeThemes.theme1;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadius.pill),
       child: Container(
-        width: 30,
-        height: 30,
+        width: 32,
+        height: 32,
         decoration: BoxDecoration(
           color: theme.primary,
           shape: BoxShape.circle,
         ),
-        child: Icon(icon, size: 16, color: theme.onPrimary),
+        child: Icon(icon, size: AppSpacing.pillIcon, color: theme.onPrimary),
       ),
     );
   }

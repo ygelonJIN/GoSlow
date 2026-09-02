@@ -3,55 +3,42 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/design/design.dart';
-import '../../data/models/milestone.dart';
-import '../../data/models/review_stats.dart';
+import '../../data/models/content_entry.dart';
 import '../../data/providers/app_providers.dart';
+import '../../shared/empty_state.dart';
 import '../../shared/feedback_dialog.dart';
 import '../../shared/overlay_page.dart';
-import '../../shared/section_header.dart';
 
-/// 里程碑庆祝页（M4）— 全局主题下的收获仪式。
+/// 内容完成总结页（原里程碑庆祝页，逻辑改为「读完成一篇内容」）。
 ///
-/// 整页纸感：accent 暖金徽章 + display 大标题 + 达成数据 + 收获总结 +
-/// 分享卡。无撒花动效，靠大留白完成仪式感。触发点：
-/// 1. 闪卡结算后检测到新里程碑（自动整页弹出）；
-/// 2. 设置页「里程碑」入口回看历史。
+/// 触发方式：阅读页底部「标记已学完」手动点击后进入；或「已学完回顾」里
+/// 回看历史。不再按照“认识多少个词”自动弹出。
 class CelebrationPage extends ConsumerWidget {
-  const CelebrationPage({super.key, required this.threshold});
+  const CelebrationPage({super.key, required this.content});
 
-  /// 本次庆祝的认识词数里程碑（100/500/1000/2000/3000/5000）。
-  final int threshold;
+  /// 已学完的内容。
+  final ContentEntry content;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final statsAsync = ref.watch(reviewStatsProvider);
-
     return OverlayPage(
-      title: '庆祝',
+      title: '内容总结',
       kicker: 'MILESTONE',
-      child: statsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(
-          child: Padding(
-            padding: AppInsets.pageHorizontal,
-            child: Text('数据加载失败：$e', style: Theme.of(context).textTheme.bodySmall),
-          ),
-        ),
-        data: (stats) => _CelebrationView(threshold: threshold, stats: stats),
-      ),
+      child: ContentCelebrationView(content: content),
     );
   }
 }
 
-class _CelebrationView extends StatelessWidget {
-  const _CelebrationView({required this.threshold, required this.stats});
+/// 内容总结视图（庆祝页 / 回顾页共用）。
+class ContentCelebrationView extends ConsumerWidget {
+  const ContentCelebrationView({super.key, required this.content});
 
-  final int threshold;
-  final ReviewStats stats;
+  final ContentEntry content;
 
   @override
-  Widget build(BuildContext context) {
-    final next = _nextThreshold(threshold);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final summaryAsync = ref.watch(contentWordSummaryProvider(content.id));
+    final completedAt = content.completedAt;
 
     return ListView(
       padding: EdgeInsets.only(
@@ -59,7 +46,7 @@ class _CelebrationView extends StatelessWidget {
         bottom: AppOverlay.bottomInset(context) + AppSpacing.xl,
       ),
       children: [
-        // 里程碑徽章（§13：accent 前景 + accent 0.13 底）。
+        // 完成徽章（accent 前景 + accent 0.13 底）。
         Center(
           child: Container(
             width: 56,
@@ -74,7 +61,7 @@ class _CelebrationView extends StatelessWidget {
         const SizedBox(height: AppSpacing.lg),
         Center(
           child: Text(
-            'MILESTONE',
+            'FINISHED',
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: AppColors.accent,
                   letterSpacing: 0.16 * 11,
@@ -82,10 +69,11 @@ class _CelebrationView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.xs),
-        // 庆祝大标题（§13：display 字阶，居中）。
-        Center(
+        // 总结标题：内容标题。
+        Padding(
+          padding: AppInsets.pageHorizontal,
           child: Text(
-            '认识 $threshold 个词',
+            '“${content.title}” 读完了',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   color: AppColors.ink,
@@ -97,7 +85,9 @@ class _CelebrationView extends StatelessWidget {
           child: Padding(
             padding: AppInsets.pageHorizontal,
             child: Text(
-              '慢慢来，比较快 —— 这 $threshold 个词正在成为你阅读里的老朋友',
+              completedAt == null
+                  ? '给自己一个小小的完成仪式 —— 这篇内容读完啦'
+                  : '${_fmtDate(completedAt)} 完成 · ${content.displaySource} · ${content.wordCount} 词',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.inkMuted,
@@ -107,65 +97,172 @@ class _CelebrationView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.xl2),
-        // 达成数据（§11 迷你统计行）。
-        Card(
-          child: Padding(
-            padding: AppInsets.card,
-            child: Row(
-              children: [
-                _MiniStat(label: '累计认识', value: '${stats.matureCount}'),
-                Container(width: 1, height: 32, color: AppColors.line, margin: const EdgeInsets.symmetric(horizontal: AppSpacing.sm)),
-                _MiniStat(label: '累计自评', value: '${stats.totalReviews}'),
-                Container(width: 1, height: 32, color: AppColors.line, margin: const EdgeInsets.symmetric(horizontal: AppSpacing.sm)),
-                _MiniStat(label: '连续天数', value: '${stats.streakDays}'),
-                Container(width: 1, height: 32, color: AppColors.line, margin: const EdgeInsets.symmetric(horizontal: AppSpacing.sm)),
-                _MiniStat(label: '认识率', value: '${_fmt(stats.goodRatePct)}%'),
-              ],
+        // 本篇高亮词统计（内容级，替代旧的全局词数里程碑）。
+        summaryAsync.when(
+          loading: () => const Padding(
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.xl3),
+            child: Center(child: CircularProgressIndicator()),
+          ),
+          error: (e, _) => Card(
+            margin: AppInsets.pageHorizontal,
+            child: Padding(
+              padding: AppInsets.card,
+              child: Text(
+                '统计加载失败：$e',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        // 收获总结卡（§13：quote 前缀 + 斜体引语）。
-        Card(
-          child: Padding(
-            padding: AppInsets.card,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.only(top: 2),
-                  child: Icon(Icons.format_quote_outlined, size: 18, color: AppColors.accent),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+          data: (summary) => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Card(
+                margin: AppInsets.pageHorizontal,
+                child: Padding(
+                  padding: AppInsets.card,
+                  child: Row(
                     children: [
-                      Text(
-                        '认识 $threshold 词里程碑达成',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppColors.ink),
+                      _MiniStat(label: '内容词', value: '${summary.total}'),
+                      Container(
+                        width: 1,
+                        height: 32,
+                        color: AppColors.line,
+                        margin: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
                       ),
-                      const SizedBox(height: AppSpacing.xs),
-                      Text(
-                        next == null
-                            ? '你已经走过了这张词表的全程。接下来，去内容里遇见它们。'
-                            : '离下一个里程碑「认识 $next 个词」还差 ${(next - stats.matureCount).clamp(0, next)} 个。',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppColors.inkMuted,
-                              fontStyle: FontStyle.italic,
-                              height: 1.6,
-                            ),
+                      _MiniStat(label: '已认识', value: '${summary.known}'),
+                      Container(
+                        width: 1,
+                        height: 32,
+                        color: AppColors.line,
+                        margin: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
                       ),
+                      _MiniStat(label: '待复习', value: '${summary.review}'),
+                      Container(
+                        width: 1,
+                        height: 32,
+                        color: AppColors.line,
+                        margin: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                      ),
+                      _MiniStat(label: '还没消化', value: '${summary.unfamiliarCount}'),
                     ],
                   ),
                 ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              // 收获总结：还有哪些词要消化。
+              Card(
+                margin: AppInsets.pageHorizontal,
+                child: Padding(
+                  padding: AppInsets.card,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.format_quote_outlined,
+                            size: 18,
+                            color: AppColors.accent,
+                          ),
+                          const SizedBox(width: AppSpacing.md),
+                          Expanded(
+                            child: Text(
+                              '慢慢来，比较快',
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(color: AppColors.ink),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      if (summary.unfamiliarCount == 0)
+                        Text(
+                          '这篇里的考纲词你已经全部认识了，去内容页复习里再巩固几轮吧。',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: AppColors.inkMuted,
+                                fontStyle: FontStyle.italic,
+                                height: 1.6,
+                              ),
+                        )
+                      else
+                        Text(
+                          '这篇还有 ${summary.unfamiliarCount} 个词没完全消化，它们会出现在内容页「复习」里，直到变成老熟人。',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: AppColors.inkMuted,
+                                fontStyle: FontStyle.italic,
+                                height: 1.6,
+                              ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              if (summary.unfamiliar.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.lg),
+                Card(
+                  margin: AppInsets.pageHorizontal,
+                  child: Padding(
+                    padding: AppInsets.card,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '本篇还待消化的词',
+                          style: Theme.of(context).textTheme.labelLarge
+                              ?.copyWith(color: AppColors.inkMuted),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        Wrap(
+                          spacing: AppSpacing.xs,
+                          runSpacing: AppSpacing.xs,
+                          children: [
+                            for (final w in summary.unfamiliar)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.sm,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.seedSoft.withValues(
+                                    alpha: AppColors.alphaSubtle,
+                                  ),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.xs,
+                                  ),
+                                  border: Border.all(color: AppColors.line),
+                                ),
+                                child: Text(
+                                  w,
+                                  style: Theme.of(context).textTheme.labelSmall
+                                      ?.copyWith(color: AppColors.ink),
+                                ),
+                              ),
+                            if (summary.unfamiliarCount > summary.unfamiliar.length)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.sm,
+                                  vertical: 4,
+                                ),
+                                child: Text(
+                                  '+${summary.unfamiliarCount - summary.unfamiliar.length}',
+                                  style: Theme.of(context).textTheme.labelSmall
+                                      ?.copyWith(color: AppColors.inkMuted),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
-            ),
+            ],
           ),
         ),
         const SizedBox(height: AppSpacing.lg),
-        // 分享卡（§13：大标题 + 数据 + 日期 + 分享按钮）。
+        // 分享卡。
         Card(
+          margin: AppInsets.pageHorizontal,
           child: Padding(
             padding: AppInsets.card,
             child: Column(
@@ -180,19 +277,22 @@ class _CelebrationView extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 Text(
-                  '我在 GoSlow 认识了 $threshold 个词',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppColors.ink),
+                  '我在 GoSlow 读完了《${content.title}》',
+                  style: Theme.of(context).textTheme.titleMedium
+                      ?.copyWith(color: AppColors.ink),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  '累计自评 ${stats.totalReviews} 次 · 认识率 ${_fmt(stats.goodRatePct)}% · 连续学习 ${stats.streakDays} 天',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.inkMuted),
+                  '${content.wordCount} 词 · ${content.displaySource} · ${summaryAsync.maybeWhen(data: (s) => '${s.total} 个考纲词', orElse: () => '')}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.inkMuted,
+                      ),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
-                    onPressed: () => _share(context, next),
+                    onPressed: () => _share(context, ref),
                     icon: const Icon(Icons.ios_share, size: 16),
                     label: const Padding(
                       padding: EdgeInsets.symmetric(vertical: AppSpacing.xxs),
@@ -208,7 +308,7 @@ class _CelebrationView extends StatelessWidget {
         Padding(
           padding: AppInsets.pageHorizontal,
           child: FilledButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(context).maybePop(),
             child: const Padding(
               padding: EdgeInsets.symmetric(vertical: AppSpacing.xs),
               child: Text('继续'),
@@ -220,11 +320,13 @@ class _CelebrationView extends StatelessWidget {
     );
   }
 
-  Future<void> _share(BuildContext context, int? next) async {
+  Future<void> _share(BuildContext context, WidgetRef ref) async {
+    final summaryAsync = ref.watch(contentWordSummaryProvider(content.id));
+    final statsLine = summaryAsync
+        .maybeWhen(data: (s) => '内容词 ${s.total} · 已认识 ${s.known} · 待复习 ${s.review}', orElse: () => '');
     final text = [
-      '我在 GoSlow 认识了 $threshold 个词',
-      '累计自评 ${stats.totalReviews} 次 · 认识率 ${_fmt(stats.goodRatePct)}% · 连续学习 ${stats.streakDays} 天',
-      next == null ? '' : '下一个里程碑：认识 $next 个词',
+      '我在 GoSlow 读完了《${content.title}》',
+      '${content.wordCount} 词 · ${content.displaySource} · $statsLine',
       '—— 把考纲词汇镶嵌进真实的阅读、观影、听歌场景',
     ].where((l) => l.isNotEmpty).join('\n');
 
@@ -239,17 +341,11 @@ class _CelebrationView extends StatelessWidget {
     }
   }
 
-  static String _fmt(double v) {
-    if (v == v.roundToDouble()) return '${v.round()}';
-    return v.toStringAsFixed(1);
+  static String _fmtDate(DateTime d) {
+    final m = d.month.toString().padLeft(2, '0');
+    final day = d.day.toString().padLeft(2, '0');
+    return '${d.year}-$m-$day';
   }
-}
-
-int? _nextThreshold(int current) {
-  for (var i = 0; i < kKnownWordMilestones.length - 1; i++) {
-    if (kKnownWordMilestones[i] == current) return kKnownWordMilestones[i + 1];
-  }
-  return null;
 }
 
 class _MiniStat extends StatelessWidget {
@@ -268,18 +364,17 @@ class _MiniStat extends StatelessWidget {
             overflow: TextOverflow.fade,
             softWrap: false,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: AppColors.ink,
-              fontSize: 13,
-            ),
+                  color: AppColors.ink,
+                  fontSize: AppSpacing.statFontSize,
+                ),
           ),
           const SizedBox(height: 2),
           Text(
             label,
             maxLines: 1,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColors.inkMuted,
-              fontSize: 10,
-            ),
+                  color: AppColors.inkMuted,
+                ),
           ),
         ],
       ),
@@ -287,19 +382,20 @@ class _MiniStat extends StatelessWidget {
   }
 }
 
-/// 里程碑历史页（设置页「里程碑」入口）：已庆祝里程碑 + 下一个目标。
-class MilestonesPage extends ConsumerWidget {
-  const MilestonesPage({super.key});
+/// 掌握内容回顾页（设置页「掌握内容」入口，替代旧的词数里程碑历史）。
+///
+/// 列出所有标记过「已学完」的内容与完成时间，点开可回看内容总结。
+class ContentDonePage extends ConsumerWidget {
+  const ContentDonePage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final achievedAsync = ref.watch(achievedMilestonesProvider);
-    final known = ref.watch(knownWordsProvider).length;
+    final contentsAsync = ref.watch(contentsProvider);
 
     return OverlayPage(
-      title: '里程碑',
+      title: '掌握内容',
       kicker: 'MILESTONE',
-      child: achievedAsync.when(
+      child: contentsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
           child: Padding(
@@ -307,64 +403,90 @@ class MilestonesPage extends ConsumerWidget {
             child: Text('加载失败：$e', style: Theme.of(context).textTheme.bodySmall),
           ),
         ),
-        data: (achieved) {
-          final next = _firstUpreached(known);
+        data: (contents) {
+          final done = contents.where((c) => c.isCompleted).toList()
+            ..sort((a, b) {
+              final at = (a.completedAt ?? a.createdAt).millisecondsSinceEpoch;
+              final bt = (b.completedAt ?? b.createdAt).millisecondsSinceEpoch;
+              return bt.compareTo(at);
+            });
+          if (done.isEmpty) {
+            return Padding(
+              padding: EdgeInsets.only(
+                top: AppOverlay.topInset(context),
+                bottom: AppOverlay.bottomInset(context) + AppSpacing.xl,
+              ),
+              child: const EmptyState(
+                icon: Icons.emoji_events_outlined,
+                title: '还没有读完的内容',
+                subtitle: '读一篇内容，读完后在阅读页点「标记已学完」',
+              ),
+            );
+          }
           return ListView(
             padding: EdgeInsets.only(
               top: AppOverlay.topInset(context),
               bottom: AppOverlay.bottomInset(context) + AppSpacing.xl,
             ),
             children: [
-              const SectionHeader('进行中', padding: EdgeInsets.fromLTRB(
-                AppSpacing.xl,
-                0,
-                AppSpacing.xl,
-                AppSpacing.sm,
-              )),
-              _NextMilestoneCard(known: known, next: next),
-              const SectionHeader('已庆祝'),
-              if (achieved.isEmpty)
-                const _EmptyMilestoneCard()
-              else
-                for (final m in achieved.reversed)
-                  Card(
-                    child: ListTile(
-                      leading: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: AppColors.accent.withValues(alpha: AppColors.alphaHighlightBg),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.emoji_events_outlined, size: 18, color: AppColors.accent),
-                      ),
-                      title: Text(
-                        '认识 ${m.threshold} 个词',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.ink),
-                      ),
-                      subtitle: Text(
-                        '${m.achievedAt.year}-${m.achievedAt.month.toString().padLeft(2, '0')}-${m.achievedAt.day.toString().padLeft(2, '0')}',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.chevron_right, size: 18, color: AppColors.inkMuted),
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) => CelebrationPage(threshold: m.threshold),
-                            ),
-                          );
-                        },
-                      ),
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => CelebrationPage(threshold: m.threshold),
-                          ),
-                        );
-                      },
-                    ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.xl,
+                  0,
+                  AppSpacing.xl,
+                  AppSpacing.sm,
+                ),
+                child: Text(
+                  '${done.length} 篇已读完',
+                  style: Theme.of(context).textTheme.labelLarge
+                      ?.copyWith(color: AppColors.inkMuted),
+                ),
+              ),
+              for (final c in done)
+                Card(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                    vertical: AppSpacing.xxs,
                   ),
+                  child: ListTile(
+                    leading: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: AppColors.accent.withValues(alpha: AppColors.alphaHighlightBg),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.check_rounded,
+                        size: 18,
+                        color: AppColors.accent,
+                      ),
+                    ),
+                    title: Text(
+                      c.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyMedium
+                          ?.copyWith(color: AppColors.ink),
+                    ),
+                    subtitle: Text(
+                      '${_fmtDate(c.completedAt ?? c.createdAt)} · ${c.displaySource} · ${c.wordCount} 词',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    trailing: const Icon(
+                      Icons.chevron_right,
+                      size: 18,
+                      color: AppColors.inkMuted,
+                    ),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => CelebrationPage(content: c),
+                        ),
+                      );
+                    },
+                  ),
+                ),
               const SizedBox(height: AppSpacing.md),
             ],
           );
@@ -373,83 +495,9 @@ class MilestonesPage extends ConsumerWidget {
     );
   }
 
-  int? _firstUpreached(int known) {
-    for (final t in kKnownWordMilestones) {
-      if (known < t) return t;
-    }
-    return null;
-  }
-}
-
-class _NextMilestoneCard extends StatelessWidget {
-  const _NextMilestoneCard({required this.known, required this.next});
-
-  final int known;
-  final int? next;
-
-  @override
-  Widget build(BuildContext context) {
-    final next = this.next; // 局部变量以支持空安全提升
-    final progress = next == null ? 1.0 : (known / next).clamp(0.0, 1.0);
-    return Card(
-      child: Padding(
-        padding: AppInsets.card,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    next == null ? '认识词表全部走完' : '认识 $next 个词',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppColors.ink),
-                  ),
-                ),
-                Text(
-                  next == null ? '$known 词' : '$known / $next',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.inkMuted),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.md),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.pill),
-              child: LinearProgressIndicator(
-                value: progress,
-                minHeight: 6,
-                color: Theme.of(context).colorScheme.primary,
-                backgroundColor: AppColors.line,
-              ),
-            ),
-            if (next != null) ...[
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                '还差 ${next - known} 个 · 闪卡与阅读里多遇见几次就到了',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.inkMuted),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _EmptyMilestoneCard extends StatelessWidget {
-  const _EmptyMilestoneCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: AppInsets.card,
-        child: Center(
-          child: Text(
-            '还没有达成里程碑 · 第一个是「认识 100 个词」',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.inkMuted),
-          ),
-        ),
-      ),
-    );
+  static String _fmtDate(DateTime d) {
+    final m = d.month.toString().padLeft(2, '0');
+    final day = d.day.toString().padLeft(2, '0');
+    return '${d.year}-$m-$day';
   }
 }

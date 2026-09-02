@@ -9,7 +9,9 @@ import '../../../data/models/srs_card_state.dart';
 import '../../../data/models/word_entry.dart';
 import '../../../data/providers/app_providers.dart';
 import '../../../data/services/tts_service.dart';
+import '../../../shared/action_pill.dart';
 import '../../../shared/meaning_card.dart';
+import '../../../shared/rating_button.dart';
 import '../../../shared/word_history_stats.dart';
 
 /// 点词底部面板：与闪卡一致的「认 / 不认」流。
@@ -22,7 +24,7 @@ Future<void> showWordSheet(
   WidgetRef ref,
   HighlightSpan span,
 ) {
-  const mode = ModeThemes.love;
+  const mode = ModeThemes.theme1;
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -116,13 +118,13 @@ class _WordSheetState extends ConsumerState<_WordSheet> {
         const SizedBox(height: AppSpacing.lg),
         Row(
           children: [
-            _ActionPill(
+            ActionPill(
               icon: Icons.volume_up_outlined,
               label: '朗读',
               onTap: () => TtsService.instance.speak(_wordKey),
             ),
             const SizedBox(width: AppSpacing.xs),
-            _ActionPill(
+            ActionPill(
               icon: isFav ? Icons.star : Icons.star_outline,
               label: isFav ? '已收藏' : '收藏',
               filled: isFav,
@@ -140,7 +142,8 @@ class _WordSheetState extends ConsumerState<_WordSheet> {
         Row(
           children: [
             Expanded(
-              child: _RateButton(
+              child: RatingButton(
+                dense: true,
                 icon: Icons.check_circle_outline,
                 label: '认识',
                 fg: AppColors.card,
@@ -151,7 +154,8 @@ class _WordSheetState extends ConsumerState<_WordSheet> {
             ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
-              child: _RateButton(
+              child: RatingButton(
+                dense: true,
                 icon: Icons.sentiment_neutral_outlined,
                 label: '模糊',
                 fg: AppColors.ink,
@@ -166,7 +170,8 @@ class _WordSheetState extends ConsumerState<_WordSheet> {
             ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
-              child: _RateButton(
+              child: RatingButton(
+                dense: true,
                 icon: Icons.cancel_outlined,
                 label: '不认识',
                 fg: AppColors.inkMuted,
@@ -260,110 +265,6 @@ class DragHandle extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.line,
           borderRadius: BorderRadius.circular(AppRadius.pill),
-        ),
-      ),
-    );
-  }
-}
-
-class _ActionPill extends StatelessWidget {
-  const _ActionPill({
-    required this.icon,
-    required this.label,
-    this.filled = false,
-    this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool filled;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.pill),
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.sm,
-        ),
-        decoration: BoxDecoration(
-          color: filled
-              ? scheme.primary.withValues(alpha: AppColors.alphaSubtle)
-              : AppColors.card,
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-          border: Border.all(
-            color: filled
-                ? scheme.primary.withValues(alpha: 0.2)
-                : AppColors.line,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 16,
-              color: filled ? scheme.primary : AppColors.inkMuted,
-            ),
-            const SizedBox(width: AppSpacing.xs),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: filled ? scheme.primary : AppColors.ink,
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _RateButton extends StatelessWidget {
-  const _RateButton({
-    required this.icon,
-    required this.label,
-    required this.fg,
-    required this.bg,
-    required this.border,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color fg;
-  final Color bg;
-  final Color border;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: border),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 20, color: fg),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.labelLarge
-                  ?.copyWith(color: fg, letterSpacing: 0.04 * 13),
-            ),
-          ],
         ),
       ),
     );

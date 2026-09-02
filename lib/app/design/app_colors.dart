@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// 色彩 Token —— 全局主题色板。
-/// 页面禁止直接写 Color(0x...)，统一引用此处或 `ModeThemes.love`。
+/// 页面禁止直接写 Color(0x...)，统一引用此处或 `ModeThemes.theme1`。
 abstract final class AppColors {
   static const Color seed = Color(0xFF4F7B49);
   static const Color paper = Color(0xFFFAF3E6);

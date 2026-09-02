@@ -59,9 +59,17 @@ void main() {
       final cet4 = entry('apple')..tags = ['cet4'];
       final gre = entry('zenith')..tags = ['gre'];
       final engine = HighlightEngine(indexWith({'apple': cet4, 'zenith': gre}));
-      final spans = engine.highlight('apple zenith', examTag: 'cet4');
+      final spans = engine.highlight('apple zenith', examTags: {'cet4'});
       expect(spans, hasLength(1));
       expect(spans.first.word, 'apple');
+    });
+
+    test('考纲多选命中任一考纲即高亮', () {
+      final cet4 = entry('apple')..tags = ['cet4'];
+      final gre = entry('zenith')..tags = ['gre'];
+      final engine = HighlightEngine(indexWith({'apple': cet4, 'zenith': gre}));
+      final spans = engine.highlight('apple zenith', examTags: {'cet4', 'gre'});
+      expect(spans, hasLength(2));
     });
 
     test('非考纲词不高亮', () {

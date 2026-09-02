@@ -1,26 +1,30 @@
-import 'dart:convert';
-import 'dart:io';
-import 'dart:typed_data';
-
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/design/design.dart';
 import '../../app/theme/fold_decoration.dart';
 import '../../app/theme/mode_theme.dart';
-import '../../data/parsers/content_parser.dart';
+import '../../data/dict/dict_providers.dart';
+import '../../data/models/word_entry.dart';
 import '../../data/providers/app_providers.dart';
 import '../../shared/entry_card.dart';
+import '../../shared/exam_tag_picker.dart';
 import '../../shared/feedback_dialog.dart';
 import '../../shared/overlay_page.dart';
+import '../../shared/review_size_picker.dart';
 import '../../shared/section_header.dart';
-import 'dict_lookup_page.dart';
+import '../celebration/celebration_page.dart';
+import '../favorite/favorite_page.dart';
+import 'content_import.dart';
 import 'paste_page.dart';
 import 'reader_page.dart';
+import 'review_session.dart';
 
 class ContentPage extends ConsumerWidget {
-  const ContentPage({super.key});
+  const ContentPage({super.key, this.searchQuery = ''});
+
+  /// 主页底部输入条的实时关键词：非空时按标题 / 来源过滤「最近阅读」。
+  final String searchQuery;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -35,111 +39,81 @@ class ContentPage extends ConsumerWidget {
         ),
       ),
       data: (contents) {
+        final hasContents = contents.isNotEmpty;
+        final q = searchQuery.trim().toLowerCase();
+        final visible = q.isEmpty
+            ? contents
+            : contents
+                  .where(
+                    (c) =>
+                        c.title.toLowerCase().contains(q) ||
+                        c.displaySource.toLowerCase().contains(q),
+                  )
+                  .toList();
         return ListView(
           padding: EdgeInsets.only(
             top: AppOverlay.topInset(context),
             bottom: AppOverlay.bottomInset(context) + 96 + AppSpacing.xl,
           ),
           children: [
-            Padding(
-              padding: AppInsets.pageHorizontal.copyWith(bottom: AppSpacing.md),
-              child: _SearchField(onTap: () => _openLookup(context)),
-            ),
-            if (contents.isEmpty) ...[
-              const _ContentIntroCard(),
-            ] else ...[
+            if (hasContents)
+              _ReviewFavoriteCard(
+                onReview: () => pushContentReviewSession(context, ref),
+                onFavorite: () => _openFavorite(context),
+              ),
+            if (!hasContents)
+              const _ContentIntroCard()
+            else ...[
               const SectionHeader('最近阅读'),
-              for (final c in contents)
-                EntryCard(
-                  title: c.title,
-                  subtitle:
-                      '${c.displaySource} · ${c.wordCount} 词 · ${_formatDate(c.createdAt)}',
-                  onTap: () => _openReader(context, ref, c),
-                  trailing: _MoreButton(
-                    onTap: () => _showContentActions(context, ref, c),
-                  ),
-                ),
-              const SectionHeader('添加内容'),
-              _AddMethodCard(
-                icon: Icons.search,
-                title: '查单词',
-                subtitle: '精确查询 + 词形还原（got → get），离线可用',
-                onTap: () => _openLookup(context),
-              ),
-              _AddMethodCard(
-                icon: Icons.assignment_outlined,
-                title: '粘贴文本',
-                subtitle: '任意段落，一键高亮',
-                onTap: () => _openPaste(context),
-              ),
-              _AddMethodCard(
-                icon: Icons.upload_file_outlined,
-                title: '导入文件',
-                subtitle: '.txt / .md / .epub / .srt / .lrc',
-                onTap: () => _pickFile(context, ref),
-              ),
-              const SectionHeader('为你推荐'),
-              Card(
-                child: Padding(
-                  padding: AppInsets.card,
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: AppColors.seedSoft,
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                        ),
-                        child: Icon(
-                          Icons.auto_awesome,
-                          size: 22,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '今日一段 · 粘贴即高亮',
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(fontSize: 13, color: AppColors.ink),
+              if (visible.isEmpty)
+                Padding(
+                  padding: AppInsets.pageHorizontal,
+                  child: Card(
+                    margin: EdgeInsets.zero,
+                    child: Padding(
+                      padding: AppInsets.card,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '没有找到匹配的内容',
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(color: AppColors.ink),
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            '没有标题或来源包含“${searchQuery.trim()}”的内容；'
+                            '如果是要查单词，直接用输入框搜索即可。',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppColors.inkMuted,
+                              height: 1.6,
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '任意英文段落，自动标出考纲词',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(color: AppColors.inkMuted),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                      const Icon(
-                        Icons.chevron_right,
-                        size: 20,
-                        color: AppColors.inkMuted,
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
+                )
+              else
+                for (final c in visible)
+                  EntryCard(
+                    title: c.title,
+                    subtitle: [
+                      c.displaySource,
+                      '${c.wordCount} 词',
+                      _formatDate(c.createdAt),
+                      if (c.isCompleted) '已学完',
+                    ].join(' · '),
+                    onTap: () => _openReader(context, ref, c),
+                    trailing: _MoreButton(
+                      onTap: () => _showContentActions(context, ref, c),
+                    ),
+                  ),
             ],
           ],
         );
       },
     );
-  }
-
-  void _openLookup(BuildContext context) {
-    Navigator.of(context)
-        .push(MaterialPageRoute<void>(builder: (_) => const DictLookupPage()));
-  }
-
-  void _openPaste(BuildContext context) {
-    Navigator.of(context)
-        .push(MaterialPageRoute<void>(builder: (_) => const PastePage()));
   }
 
   void _openReader(BuildContext context, WidgetRef ref, dynamic content) {
@@ -153,14 +127,22 @@ class ContentPage extends ConsumerWidget {
     );
   }
 
+  void _openFavorite(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => const OverlayPage(
+          title: '收藏',
+          kicker: 'FAVORITE',
+          child: FavoritePage(),
+        ),
+      ),
+    );
+  }
+
   static String _formatDate(DateTime d) {
     final m = d.month.toString().padLeft(2, '0');
     final day = d.day.toString().padLeft(2, '0');
     return '${d.year}-$m-$day';
-  }
-
-  Future<void> _pickFile(BuildContext context, WidgetRef ref) async {
-    await _pickContentFile(context, ref);
   }
 
   Future<void> _showContentActions(
@@ -168,7 +150,10 @@ class ContentPage extends ConsumerWidget {
     WidgetRef ref,
     dynamic content,
   ) async {
-    const mode = ModeThemes.love;
+    final entry = await ref.read(contentRepoProvider).byId(content.id as int);
+    if (!context.mounted) return;
+    final latest = entry ?? content;
+    const mode = ModeThemes.theme1;
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
@@ -199,9 +184,54 @@ class ContentPage extends ConsumerWidget {
                 ),
                 onTap: () {
                   Navigator.pop(ctx);
-                  _openReader(context, ref, content);
+                  _openReader(context, ref, latest);
                 },
               ),
+              ListTile(
+                leading: const Icon(
+                  Icons.check_circle_outline,
+                  color: AppColors.inkMuted,
+                ),
+                title: Text(
+                  latest.isCompleted ? '查看内容总结' : '标记为已学完',
+                  style: const TextStyle(color: AppColors.ink),
+                ),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  final repo = ref.read(contentRepoProvider);
+                  if (!latest.isCompleted) {
+                    await repo.markCompleted(latest.id as int);
+                    ref.read(contentVersionProvider.notifier).state++;
+                  }
+                  final refreshed = await repo.byId(latest.id as int) ?? latest;
+                  if (!context.mounted) return;
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => CelebrationPage(content: refreshed),
+                    ),
+                  );
+                },
+              ),
+              if (latest.isCompleted)
+                ListTile(
+                  leading: const Icon(
+                    Icons.undo_outlined,
+                    color: AppColors.inkMuted,
+                  ),
+                  title: const Text(
+                    '取消已学完',
+                    style: TextStyle(color: AppColors.ink),
+                  ),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    final repo = ref.read(contentRepoProvider);
+                    await repo.clearCompleted(latest.id as int);
+                    ref.read(contentVersionProvider.notifier).state++;
+                    if (context.mounted) {
+                      FeedbackDialog.show(context, message: '已取消“已学完”标记');
+                    }
+                  },
+                ),
               ListTile(
                 leading: const Icon(
                   Icons.delete_outline,
@@ -213,18 +243,300 @@ class ContentPage extends ConsumerWidget {
                   final ok = await confirmDialog(
                     context,
                     title: '删除这篇内容？',
-                    message: '“${content.title}” 将被移除',
+                    message: '“${latest.title}” 将被移除',
                     confirmLabel: '删除',
                     icon: Icons.delete_outline,
                   );
                   if (ok) {
                     final repo = ref.read(contentRepoProvider);
-                    await repo.delete(content.id as int);
+                    await repo.delete(latest.id as int);
                     ref.read(contentVersionProvider.notifier).state++;
                   }
                 },
               ),
               const SizedBox(height: AppSpacing.sm),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 顶部学习入口卡：内容词总览 + 复习/收藏 + 当前考纲 + 复习每轮张数。
+class _ReviewFavoriteCard extends ConsumerWidget {
+  const _ReviewFavoriteCard({
+    required this.onReview,
+    required this.onFavorite,
+  });
+
+  final VoidCallback onReview;
+  final VoidCallback onFavorite;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final stats = ref.watch(contentWordsStatsProvider);
+    final favCount = ref.watch(favoriteWordSetProvider).length;
+    final currentTags = ref.watch(examTagProvider);
+    final examLabel = currentTags.contains(kAllTag)
+        ? '全部考纲'
+        : currentTags.map((t) => kExamTagNames[t] ?? t).join(' / ');
+    final reviewSettings = ref.watch(flashcardSettingsProvider);
+
+    return Padding(
+      padding: AppInsets.pageHorizontal.copyWith(bottom: AppSpacing.sm),
+      child: Card(
+        margin: EdgeInsets.zero,
+        child: Padding(
+          padding: AppInsets.card,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(child: _Stat(label: '内容词', value: '${stats.total}')),
+                  Container(
+                    width: 1,
+                    height: 24,
+                    color: AppColors.line,
+                  ),
+                  Expanded(child: _Stat(label: '已认识', value: '${stats.known}')),
+                  Container(
+                    width: 1,
+                    height: 24,
+                    color: AppColors.line,
+                  ),
+                  Expanded(child: _Stat(label: '待复习', value: '${stats.review}')),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Row(
+                children: [
+                  Expanded(
+                    child: _ActionPillButton(
+                      icon: Icons.replay_outlined,
+                      label: '复习',
+                      badge: stats.review,
+                      filled: true,
+                      onTap: onReview,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: _ActionPillButton(
+                      icon: Icons.star_outline,
+                      label: '收藏',
+                      badge: favCount,
+                      onTap: onFavorite,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              const Divider(height: 1, color: AppColors.line),
+              const SizedBox(height: AppSpacing.sm),
+              _PickerRow(
+                title: '当前考纲',
+                value: examLabel,
+                onTap: () async {
+                  final picked = await showExamTagPicker(context, currentTags);
+                  if (picked != null) {
+                    ref.read(examTagProvider.notifier).state = picked;
+                  }
+                },
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              const Divider(height: 1, color: AppColors.line),
+              const SizedBox(height: AppSpacing.sm),
+              _PickerRow(
+                title: '复习每轮张数',
+                value: '${reviewSettings.sessionSize} 张',
+                onTap: () async {
+                  final picked = await showReviewSizePicker(
+                    context,
+                    reviewSettings.sessionSize,
+                  );
+                  if (picked != null) {
+                    ref.read(flashcardSettingsProvider.notifier).state =
+                        reviewSettings.copyWith(sessionSize: picked);
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 卡片内的选择行：标题 + 尾部值胶囊 + 箭头（当前考纲 / 复习每轮张数共用）。
+class _PickerRow extends StatelessWidget {
+  const _PickerRow({
+    required this.title,
+    required this.value,
+    required this.onTap,
+  });
+
+  final String title;
+  final String value;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.sm),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+        child: Row(
+          children: [
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: AppColors.ink,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const Spacer(),
+            Flexible(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm,
+                  vertical: 3,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.seedSoft,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+                child: Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: scheme.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.xxs),
+            Icon(
+              Icons.chevron_right,
+              size: 18,
+              color: scheme.primary.withValues(alpha: 0.75),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Stat extends StatelessWidget {
+  const _Stat({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: AppColors.ink,
+            fontSize: AppSpacing.statFontSize,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall
+              ?.copyWith(color: AppColors.inkMuted),
+        ),
+      ],
+    );
+  }
+}
+
+/// 复习 / 收藏胶囊动作（选中态胶囊按钮：主色实底高亮态 / 普通态
+/// chip 浅底 + 描边，badge 数字）。
+class _ActionPillButton extends StatelessWidget {
+  const _ActionPillButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.badge = 0,
+    this.filled = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final int badge;
+  final bool filled;
+
+  @override
+  Widget build(BuildContext context) {
+    const mode = ModeThemes.theme1;
+    final scheme = Theme.of(context).colorScheme;
+    final fg = filled ? scheme.onPrimary : scheme.primary;
+    return Material(
+      color: filled ? scheme.primary : mode.chipBackground,
+      shape: FoldShape(
+        borderRadius: mode.chipRadius,
+        side: BorderSide(
+          color: filled ? scheme.primary : mode.chipBorder.withValues(alpha: 0.55),
+          width: 1,
+        ),
+        fold: mode.cornerFold,
+      ),
+      elevation: filled ? 2 : 0,
+      shadowColor: Colors.black.withValues(alpha: 0.16),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.pillHorizontal,
+            vertical: AppSpacing.pillVertical,
+          ),
+          child: Row(
+            children: [
+              Icon(icon, size: AppSpacing.pillIcon, color: fg),
+              const SizedBox(width: AppSpacing.pillGap),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: AppSpacing.pillFontSize,
+                  fontWeight: FontWeight.w600,
+                  color: fg,
+                ),
+              ),
+              const Spacer(),
+              if (badge > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: filled
+                        ? scheme.onPrimary.withValues(alpha: 0.24)
+                        : scheme.primary.withValues(alpha: AppColors.alphaIndicator),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                  child: Text(
+                    '$badge',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: fg,
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -265,7 +577,7 @@ class ContentImportPage extends ConsumerWidget {
             icon: Icons.upload_file_outlined,
             title: '导入文件',
             subtitle: '.txt / .md / .epub / .srt / .lrc',
-            onTap: () => _pickContentFile(context, ref),
+            onTap: () => pickContentFile(context, ref),
           ),
         ],
       ),
@@ -298,7 +610,7 @@ class _ImportIntroCard extends StatelessWidget {
                   ),
                   child: Icon(
                     Icons.add_circle_outline,
-                    size: 21,
+                    size: AppSpacing.cardIcon,
                     color: scheme.primary,
                   ),
                 ),
@@ -346,7 +658,8 @@ class _ContentIntroCard extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                '输入框可以直接查单词；也可以粘贴文本或导入文件，自动找出里面的考纲词，把它们变成可阅读、可复习的内容。',
+                '底部输入框可以直接查单词、搜标题；想添加阅读内容，'
+                '点输入框右侧的「添加」按钮，粘贴文本或导入文件即可。',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColors.inkMuted,
                   height: 1.6,
@@ -357,19 +670,19 @@ class _ContentIntroCard extends StatelessWidget {
               const _IntroBullet(
                 icon: Icons.search,
                 title: '查单词',
-                subtitle: '支持变形词，离线可用',
+                subtitle: '输入后按回车，支持变形词，离线可用',
               ),
               const SizedBox(height: AppSpacing.sm),
               const _IntroBullet(
-                icon: Icons.assignment_outlined,
-                title: '粘贴文本',
-                subtitle: '把一段英文直接贴进来',
+                icon: Icons.add_rounded,
+                title: '添加内容',
+                subtitle: '点输入框右侧「添加」→ 粘贴文本或导入文件',
               ),
               const SizedBox(height: AppSpacing.sm),
               const _IntroBullet(
                 icon: Icons.upload_file_outlined,
-                title: '导入文件',
-                subtitle: '支持 txt / md / epub / srt / lrc',
+                title: '支持的文件',
+                subtitle: 'txt / md / epub / srt / lrc',
               ),
             ],
           ),
@@ -411,7 +724,11 @@ class _AddMethodCard extends StatelessWidget {
                   color: AppColors.seedSoft,
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
-                child: Icon(icon, size: 22, color: scheme.primary),
+                child: Icon(
+                  icon,
+                  size: AppSpacing.cardIcon,
+                  color: scheme.primary,
+                ),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
@@ -421,7 +738,7 @@ class _AddMethodCard extends StatelessWidget {
                     Text(
                       title,
                       style: Theme.of(context).textTheme.titleMedium
-                          ?.copyWith(color: AppColors.ink, fontSize: 15),
+                          ?.copyWith(color: AppColors.ink),
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -499,151 +816,6 @@ class _IntroBullet extends StatelessWidget {
   }
 }
 
-Future<void> _pickContentFile(BuildContext context, WidgetRef ref) async {
-  final result = await FilePicker.platform.pickFiles(
-    type: FileType.custom,
-    allowedExtensions: ['txt', 'md', 'epub', 'srt', 'lrc'],
-    withData: true,
-  );
-  if (result == null || result.files.isEmpty) return;
-  final file = result.files.first;
-  final name = file.name;
-  final ext = name.toLowerCase().split('.').last;
-
-  try {
-    final bytes = file.bytes;
-    if (ext == 'epub') {
-      if (bytes == null) {
-        if (context.mounted) _toast(context, 'epub 需要以字节方式读取，请重试');
-        return;
-      }
-      await _importParsed(ref, ext, bytes);
-    } else if (ext == 'srt' || ext == 'lrc') {
-      final text = await _decodeText(file);
-      if (text == null) {
-        if (context.mounted) _toast(context, '文件读取失败');
-        return;
-      }
-      await _importParsed(ref, ext, _encode(text));
-    } else {
-      final text = await _decodeText(file);
-      if (text == null || text.trim().isEmpty) {
-        if (context.mounted) _toast(context, '文件为空或读取失败');
-        return;
-      }
-      final title = name.replaceAll(
-        RegExp(r'\.(txt|md)$', caseSensitive: false),
-        '',
-      );
-      final parsed = ContentParser.parsePlainText(text, defaultTitle: title);
-      await _importParsed(
-        ref,
-        ext,
-        _encode(parsed.plainText),
-        title: parsed.defaultTitle,
-      );
-    }
-    if (context.mounted) _toast(context, '已导入：$name');
-  } catch (e) {
-    if (context.mounted) _toast(context, '导入失败：$e');
-  }
-}
-
-Future<bool> _importParsed(
-  WidgetRef ref,
-  String sourceType,
-  List<int> bytes, {
-  String? title,
-}) async {
-  final data = Uint8List.fromList(bytes);
-  final parsed = sourceType == 'epub' || sourceType == 'srt' || sourceType == 'lrc'
-      ? ContentParser.parseFile(sourceType, data)
-      : ContentParser.parsePlainText(utf8.decode(data, allowMalformed: true));
-  if (parsed == null || parsed.plainText.trim().isEmpty) {
-    return false;
-  }
-  final repo = ref.read(contentRepoProvider);
-  await repo.insert(
-    title: title ?? parsed.defaultTitle,
-    body: parsed.plainText,
-    sourceType: sourceType,
-    sections: parsed.sections,
-  );
-  ref.read(contentVersionProvider.notifier).state++;
-  return true;
-}
-
-Future<String?> _decodeText(PlatformFile file) async {
-  if (file.bytes != null) {
-    return utf8.decode(file.bytes!, allowMalformed: true);
-  }
-  if (file.path != null) {
-    try {
-      return await File(file.path!).readAsString();
-    } catch (_) {
-      return null;
-    }
-  }
-  return null;
-}
-
-Uint8List _encode(String s) => Uint8List.fromList(utf8.encode(s));
-
-void _toast(BuildContext context, String msg, {IconData icon = Icons.info_outline}) {
-  if (context.mounted) {
-    FeedbackDialog.show(context, message: msg, icon: icon);
-  }
-}
-
-class _SearchField extends StatelessWidget {
-  const _SearchField({required this.onTap});
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    const mode = ModeThemes.love;
-    return Material(
-      color: mode.chipBackground,
-      shape: FoldShape(
-        borderRadius: mode.inputRadius,
-        side: BorderSide(
-          color: mode.chipBorder.withValues(alpha: 0.55),
-          width: 1,
-        ),
-        fold: mode.cornerFold,
-      ),
-      elevation: 2,
-      shadowColor: Colors.black.withValues(alpha: 0.14),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: mode.cornerFold ? null : mode.inputRadius,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.md,
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.search,
-                size: 18,
-                color: mode.chipForeground.withValues(alpha: 0.75),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Text(
-                '搜索标题 / 词 · 去查词',
-                style: Theme.of(context).textTheme.bodySmall
-                    ?.copyWith(color: AppColors.inkMuted),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// 内容项右侧「⋯」操作按钮：选中态胶囊样式（primary 淡底 + 描边），
 /// 比旧 IconButton 更显著，视觉与全局 PillButton 同构。
 class _MoreButton extends StatelessWidget {
@@ -653,7 +825,7 @@ class _MoreButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const mode = ModeThemes.love;
+    const mode = ModeThemes.theme1;
     final scheme = Theme.of(context).colorScheme;
     return Material(
       color: scheme.primary.withValues(alpha: 0.16),

@@ -272,7 +272,6 @@ class _MeaningLineRow extends StatelessWidget {
             style: theme.labelSmall?.copyWith(
               color: Theme.of(context).colorScheme.primary,
               fontWeight: FontWeight.w600,
-              fontSize: 11,
             ),
           ),
         ),

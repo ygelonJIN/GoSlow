@@ -52,12 +52,20 @@ class LookupService {
   }
 }
 
-/// 当前考纲（全局），默认"全部"。
-final examTagProvider = StateProvider<String>((ref) => kAllTag);
+/// 当前考纲（全局多选）：可同时选中多个考纲；[kAllTag]（全部）互斥独占，
+/// 一旦选中「全部」就忽略其他选择。默认全部。
+final examTagProvider = StateProvider<Set<String>>((ref) => {kAllTag});
 
-/// 高亮样式：单色 / 多色模式。
+/// 高亮样式：
+/// - 只选一个考纲 → 单色（该考纲自己的颜色）；
+/// - 选多个考纲、或选「全部」 → 自动多色（每个考纲各用自己的颜色）。
+///
+/// 由 [examTagProvider] 派生，不再手动切换。
 enum HighlightMode { single, multi }
 
-final highlightModeProvider = StateProvider<HighlightMode>((ref) {
-  return HighlightMode.single;
+final highlightModeProvider = Provider<HighlightMode>((ref) {
+  final tags = ref.watch(examTagProvider);
+  return tags.contains(kAllTag) || tags.length > 1
+      ? HighlightMode.multi
+      : HighlightMode.single;
 });

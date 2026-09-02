@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/design/design.dart';
+import '../../app/theme/fold_decoration.dart';
+import '../../app/theme/mode_theme.dart';
 import '../../data/dict/dict_providers.dart';
 import '../../data/dict/highlight_engine.dart';
 import '../../data/models/content_entry.dart';
 import '../../data/parsers/parsed_content.dart';
 import '../../data/providers/app_providers.dart';
 import '../../shared/overlay_page.dart';
+import '../celebration/celebration_page.dart';
 import 'widgets/highlighted_text.dart';
 import 'widgets/word_sheet.dart';
 
@@ -24,6 +27,7 @@ class _Para {
 /// - 纯文本内容：全文一次性高亮得到全局偏移，再按段落切片。
 /// - 结构化内容（M5）：epub 按章节渲染（标题 + 正文），
 ///   srt/lrc 按时间轴行渲染（时间标签 + 文本），分节内单独高亮。
+/// - 底部通栏：读完手动点「标记已学完」→ 进入内容总结（庆祝）。
 class ReaderPage extends ConsumerWidget {
   const ReaderPage({super.key, required this.content});
 
@@ -31,14 +35,26 @@ class ReaderPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final examTag = ref.watch(examTagProvider);
+    final examTags = ref.watch(examTagProvider);
     final highlightMode = ref.watch(highlightModeProvider);
     final engineAsync = ref.watch(highlightEngineProvider);
     final knownWords = ref.watch(knownWordsProvider);
+    // 以库里的最新状态为准（可能在列表页已标记学完）。
+    final liveContent = ref
+        .watch(contentsProvider)
+        .maybeWhen(
+          data: (list) =>
+              list.where((c) => c.id == content.id).firstOrNull ?? content,
+          orElse: () => content,
+        );
 
     return OverlayPage(
       title: content.title,
       kicker: content.displaySource,
+      bottomBar: _CompletionBar(
+        completed: liveContent.isCompleted,
+        onTap: () => _onCompletionTap(context, ref, liveContent),
+      ),
       child: engineAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
@@ -49,10 +65,29 @@ class ReaderPage extends ConsumerWidget {
         ),
         data: (engine) {
           if (content.hasSections) {
-            return _buildSections(context, ref, engine, examTag, highlightMode, knownWords);
+            return _buildSections(context, ref, engine, examTags, highlightMode, knownWords);
           }
-          return _buildPlain(context, ref, engine, examTag, highlightMode, knownWords);
+          return _buildPlain(context, ref, engine, examTags, highlightMode, knownWords);
         },
+      ),
+    );
+  }
+
+  Future<void> _onCompletionTap(
+    BuildContext context,
+    WidgetRef ref,
+    ContentEntry live,
+  ) async {
+    final repo = ref.read(contentRepoProvider);
+    if (!live.isCompleted) {
+      await repo.markCompleted(live.id);
+      ref.read(contentVersionProvider.notifier).state++;
+    }
+    final refreshed = await repo.byId(live.id) ?? live;
+    if (!context.mounted) return;
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => CelebrationPage(content: refreshed),
       ),
     );
   }
@@ -65,7 +100,7 @@ class ReaderPage extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     HighlightEngine engine,
-    String examTag,
+    Set<String> examTags,
     HighlightMode highlightMode,
     Set<String> knownWords,
   ) {
@@ -96,9 +131,8 @@ class ReaderPage extends ConsumerWidget {
           Text(
             highlightMode == HighlightMode.multi ? '多色' : '单色',
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontSize: 10,
-                ),
+              color: Theme.of(context).colorScheme.primary,
+            ),
           ),
         ],
       ),
@@ -109,7 +143,7 @@ class ReaderPage extends ConsumerWidget {
         AppSpacing.lg,
         AppOverlay.topInset(context),
         AppSpacing.lg,
-        AppOverlay.bottomInset(context) + AppSpacing.xl,
+        AppOverlay.bottomInset(context) + 96 + AppSpacing.xl,
       ),
       children: [
         infoBar,
@@ -127,7 +161,7 @@ class ReaderPage extends ConsumerWidget {
                     section: sections[i],
                     timed: timed,
                     engine: engine,
-                    examTag: examTag,
+                    examTags: examTags,
                     highlightMode: highlightMode,
                     knownWords: knownWords,
                     onTapSpan: (span) {
@@ -157,14 +191,14 @@ class ReaderPage extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     HighlightEngine engine,
-    String examTag,
+    Set<String> examTags,
     HighlightMode highlightMode,
     Set<String> knownWords,
   ) {
     final paras = _splitWithOffsets(content.body);
     final globalSpans = engine.highlight(
       content.body,
-      examTag: highlightMode == HighlightMode.single ? (examTag == 'all' ? null : examTag) : null,
+      examTags: highlightMode == HighlightMode.single ? examTags : null,
     );
     final visibleSpans = globalSpans.where((s) => !knownWords.contains(s.entry.word.toLowerCase())).toList();
     final perPara = _sliceSpans(paras, visibleSpans);
@@ -197,7 +231,6 @@ class ReaderPage extends ConsumerWidget {
                 highlightMode == HighlightMode.multi ? '多色' : '单色',
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: Theme.of(context).colorScheme.primary,
-                      fontSize: 10,
                     ),
               ),
             ],
@@ -215,7 +248,6 @@ class ReaderPage extends ConsumerWidget {
                   HighlightedText(
                     text: paras[i].text,
                     spans: perPara[i],
-                    highlightMode: highlightMode,
                     onTapSpan: (span) {
                       final global = HighlightSpan(
                         start: span.start + paras[i].start,
@@ -230,13 +262,13 @@ class ReaderPage extends ConsumerWidget {
                 ],
                 if (paras.isEmpty)
                   Text(
-                    content.body,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.ink,
-                          height: 26 / 14,
-                          fontSize: 15,
-                        ),
+                  content.body,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.ink,
+                    height: AppSpacing.readingLineHeight / AppSpacing.readingFontSize,
+                    fontSize: AppSpacing.readingFontSize,
                   ),
+                ),
               ],
             ),
           ),
@@ -334,7 +366,7 @@ class _SectionBlock extends StatelessWidget {
     required this.section,
     required this.timed,
     required this.engine,
-    required this.examTag,
+    required this.examTags,
     required this.highlightMode,
     required this.knownWords,
     required this.onTapSpan,
@@ -343,7 +375,7 @@ class _SectionBlock extends StatelessWidget {
   final ContentSection section;
   final bool timed;
   final HighlightEngine engine;
-  final String examTag;
+  final Set<String> examTags;
   final HighlightMode highlightMode;
   final Set<String> knownWords;
   final ValueChanged<HighlightSpan> onTapSpan;
@@ -356,7 +388,7 @@ class _SectionBlock extends StatelessWidget {
     final spans = engine
         .highlight(
           text,
-          examTag: highlightMode == HighlightMode.single ? (examTag == 'all' ? null : examTag) : null,
+          examTags: highlightMode == HighlightMode.single ? examTags : null,
         )
         .where((s) => !knownWords.contains(s.entry.word.toLowerCase()))
         .toList();
@@ -369,9 +401,8 @@ class _SectionBlock extends StatelessWidget {
           Text(
             section.title!,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColors.ink,
-                  fontSize: 17,
-                ),
+              color: AppColors.ink,
+            ),
           ),
           const SizedBox(height: AppSpacing.md),
         ],
@@ -388,19 +419,17 @@ class _SectionBlock extends StatelessWidget {
                   border: Border.all(color: AppColors.line),
                 ),
                 child: Text(
-                  section.timeLabel,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontSize: 10,
-                      ),
-                ),
+            section.timeLabel,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ),
               ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: HighlightedText(
                   text: text,
                   spans: spans,
-                  highlightMode: highlightMode,
                   onTapSpan: onTapSpan,
                 ),
               ),
@@ -410,11 +439,76 @@ class _SectionBlock extends StatelessWidget {
           HighlightedText(
             text: text,
             spans: spans,
-            highlightMode: highlightMode,
             onTapSpan: onTapSpan,
           ),
         ],
       ],
+    );
+  }
+}
+
+/// 阅读页底部通栏：未学完 = 主色「标记已学完」；已学完 = 次级「已学完 · 查看内容总结」。
+class _CompletionBar extends StatelessWidget {
+  const _CompletionBar({required this.completed, required this.onTap});
+
+  final bool completed;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    const mode = ModeThemes.theme1;
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        0,
+        AppSpacing.lg,
+        AppSpacing.md,
+      ),
+      child: Material(
+        color: completed ? mode.chipBackground : scheme.primary,
+        shape: FoldShape(
+          borderRadius: mode.chipRadius,
+          fold: mode.cornerFold,
+          side: completed
+              ? BorderSide(
+                  color: mode.chipBorder.withValues(alpha: 0.55),
+                  width: 1,
+                )
+              : BorderSide.none,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.primaryButtonHorizontal,
+              vertical: AppSpacing.primaryButtonVertical,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  completed
+                      ? Icons.check_circle
+                      : Icons.check_circle_outline,
+                  size: AppSpacing.primaryButtonIcon,
+                  color: completed ? scheme.primary : scheme.onPrimary,
+                ),
+                const SizedBox(width: AppSpacing.pillGap),
+                Text(
+                  completed ? '已学完 · 查看内容总结' : '标记已学完 · 生成总结',
+                  style: TextStyle(
+                    fontSize: AppSpacing.primaryButtonFontSize,
+                    fontWeight: FontWeight.w600,
+                    color: completed ? scheme.primary : scheme.onPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

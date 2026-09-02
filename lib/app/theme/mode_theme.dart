@@ -183,7 +183,7 @@ class ModeTheme {
 /// GoSlow 唯一预置主题。
 abstract final class ModeThemes {
   /// 暖纸色 · 圆润 · 楷体（霞鹜文楷）。
-  static const love = ModeTheme(
+  static const theme1 = ModeTheme(
     background: Color(0xFFFAF3E6),
     surface: Color(0xFFF1F7EC),
     primary: Color(0xFF4F7B49),

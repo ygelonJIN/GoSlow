@@ -37,7 +37,7 @@ class RatingButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const theme = ModeThemes.love;
+    const theme = ModeThemes.theme1;
     return Material(
       color: bg,
       shape: FoldShape(

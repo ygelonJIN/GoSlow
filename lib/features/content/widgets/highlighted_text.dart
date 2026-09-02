@@ -1,63 +1,74 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/design/design.dart';
-import '../../../data/dict/highlight_engine.dart';
 import '../../../data/dict/dict_providers.dart';
+import '../../../data/dict/highlight_engine.dart';
+import '../../../data/models/word_entry.dart';
+import '../../../data/providers/app_providers.dart';
 
 /// 纸感高亮文本：把 [text] 按 [spans] 渲染为可点击的富文本。
 ///
 /// - 非高亮：`ink` 15/26 正文，对齐阅读体验。
-/// - 高亮：`highlightBg 0.13` 淡底 + `highlightBorder 0.35` 下划线，文字加粗。
-/// - 多色模式下按词条首个 tag 取 [HighlightPalette] 底色。
-class HighlightedText extends StatelessWidget {
+/// - 高亮：淡底 + 下划线，文字加粗；颜色按词条所属考纲取色——
+///   单选考纲用该考纲的颜色，「全部」/多选时逐词按命中考纲取色，
+///   支持用户在设置里自定义每个考纲对应的颜色。
+class HighlightedText extends ConsumerWidget {
   const HighlightedText({
     super.key,
     required this.text,
     required this.spans,
     required this.onTapSpan,
-    this.highlightMode = HighlightMode.single,
   });
 
   final String text;
   final List<HighlightSpan> spans;
   final ValueChanged<HighlightSpan> onTapSpan;
-  final HighlightMode highlightMode;
 
-  Color _bgFor(HighlightSpan s) {
-    if (highlightMode == HighlightMode.single) {
-      return AppColors.highlight.withValues(alpha: AppColors.alphaHighlightBg);
+  /// 词条命中哪个当前考纲：单选时命中唯一选中的 tag；「全部」取词条首个 tag；
+  /// 未命中任一选中考纲（全部模式下的无标签词）返回空串。
+  String _tagFor(List<String> entryTags, Set<String> selection) {
+    if (selection.contains(kAllTag)) {
+      return entryTags.isNotEmpty ? entryTags.first : '';
     }
-    final tag = s.entry.tags.isNotEmpty ? s.entry.tags.first : 'zk';
-    return HighlightPalette.forTag(tag).withValues(alpha: AppColors.alphaHighlightBg);
+    for (final t in entryTags) {
+      if (selection.contains(t)) return t;
+    }
+    return '';
   }
 
-  Color _borderFor(HighlightSpan s) {
-    if (highlightMode == HighlightMode.single) {
-      return AppColors.highlight.withValues(alpha: AppColors.alphaHighlightBorder);
-    }
-    final tag = s.entry.tags.isNotEmpty ? s.entry.tags.first : 'zk';
-    return HighlightPalette.forTag(tag).withValues(alpha: AppColors.alphaHighlightBorder);
+  Color _colorFor(
+    HighlightSpan s,
+    Set<String> selection,
+    Map<String, Color> overrides,
+  ) {
+    final tag = _tagFor(s.entry.tags, selection);
+    if (tag.isEmpty) return AppColors.highlight;
+    return overrides[tag] ?? HighlightPalette.forTag(tag);
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selection = ref.watch(examTagProvider);
+    final overrides = ref.watch(highlightTagColorsProvider);
     if (text.isEmpty) return const SizedBox.shrink();
     if (spans.isEmpty) {
       return Text(
         text,
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: AppColors.ink,
-              height: 26 / 14,
-              fontSize: 15,
+              height:
+                  AppSpacing.readingLineHeight / AppSpacing.readingFontSize,
+              fontSize: AppSpacing.readingFontSize,
             ),
       );
     }
 
     final defaultStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
           color: AppColors.ink,
-          height: 26 / 14,
-          fontSize: 15,
+          height: AppSpacing.readingLineHeight / AppSpacing.readingFontSize,
+          fontSize: AppSpacing.readingFontSize,
         );
 
     final children = <TextSpan>[];
@@ -70,14 +81,13 @@ class HighlightedText extends StatelessWidget {
           style: defaultStyle,
         ));
       }
-      final bg = _bgFor(span);
-      final border = _borderFor(span);
+      final hlColor = _colorFor(span, selection, overrides);
       children.add(TextSpan(
         text: text.substring(span.start, span.end),
         style: defaultStyle?.copyWith(
-          backgroundColor: bg,
+          backgroundColor: hlColor.withValues(alpha: AppColors.alphaHighlightBg),
           decoration: TextDecoration.underline,
-          decorationColor: border,
+          decorationColor: hlColor.withValues(alpha: AppColors.alphaHighlightBorder),
           decorationThickness: 2,
           fontWeight: FontWeight.w700,
         ),

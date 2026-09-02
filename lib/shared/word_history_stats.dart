@@ -30,7 +30,7 @@ class WordHistoryStats extends ConsumerWidget {
         return Text(
           '出现过 ${s.total} 次 · 认识 ${s.knownPct}% · 模糊 ${s.familiarPct}% · 不认识 ${s.unknownPct}%',
           textAlign: TextAlign.center,
-          style: base?.copyWith(fontSize: 11),
+          style: base,
         );
       },
     );

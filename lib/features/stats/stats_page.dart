@@ -249,7 +249,6 @@ class _PeriodCaption extends StatelessWidget {
         text,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
           color: AppColors.inkMuted,
-          fontSize: 10.5,
         ),
       ),
     );
@@ -275,7 +274,6 @@ class _PeriodRow extends StatelessWidget {
             softWrap: false,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: AppColors.ink,
-              fontSize: 11.5,
             ),
           ),
         ),
@@ -301,7 +299,6 @@ class _PeriodRow extends StatelessWidget {
             textAlign: TextAlign.right,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: AppColors.inkMuted,
-              fontSize: 10.5,
             ),
           ),
         ),
@@ -372,13 +369,13 @@ class _StatLine extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.ink, fontSize: 12)),
+              child: Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.ink)),
             ),
-            Text(value, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.ink, fontSize: 13, fontWeight: FontWeight.w600)),
+            Text(value, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: AppColors.ink)),
           ],
         ),
         const SizedBox(height: AppSpacing.xs),
-        Text(note, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.inkMuted, fontSize: 10.5)),
+        Text(note, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.inkMuted)),
       ],
     );
   }
@@ -405,7 +402,13 @@ class _MasteryRow extends StatelessWidget {
         Expanded(
           child: Text(label, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.ink)),
         ),
-        Text('$count', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppColors.ink)),
+        Text(
+          '$count',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: AppColors.ink,
+            fontSize: AppSpacing.statFontSize,
+          ),
+        ),
       ],
     );
   }
@@ -435,9 +438,8 @@ class _TrendBars extends StatelessWidget {
                     Text(
                       '${(day.goodRate * 100).round()}',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            fontSize: 9,
-                            color: AppColors.inkMuted,
-                          ),
+                        color: AppColors.inkMuted,
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Container(
@@ -478,7 +480,7 @@ class _MiniStat extends StatelessWidget {
             softWrap: false,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               color: AppColors.ink,
-              fontSize: 13,
+              fontSize: AppSpacing.statFontSize,
             ),
           ),
           const SizedBox(height: 2),
@@ -487,7 +489,6 @@ class _MiniStat extends StatelessWidget {
             maxLines: 1,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: AppColors.inkMuted,
-              fontSize: 10,
             ),
           ),
         ],

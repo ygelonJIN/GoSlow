@@ -33,7 +33,7 @@ class PillButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = mode ?? ModeThemes.love;
+    final theme = mode ?? ModeThemes.theme1;
     final scheme = Theme.of(context).colorScheme;
     final foreground = highlight ? scheme.onPrimary : theme.chipForeground;
     final background = highlight ? scheme.primary : theme.chipBackground;
@@ -70,7 +70,7 @@ class PillButton extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 16, color: foreground),
+              Icon(icon, size: AppSpacing.pillIcon, color: foreground),
               if (label.isNotEmpty) ...[
                 const SizedBox(width: AppSpacing.pillGap),
                 Text(

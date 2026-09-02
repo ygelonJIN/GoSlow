@@ -9,9 +9,11 @@ import '../../data/models/srs_card_state.dart';
 import '../../data/models/word_entry.dart';
 import '../../data/providers/app_providers.dart';
 import '../../data/services/tts_service.dart';
+import '../../shared/action_pill.dart';
 import '../../shared/empty_state.dart';
 import '../../shared/feedback_dialog.dart';
 import '../../shared/meaning_card.dart';
+import '../../shared/rating_button.dart';
 
 class FavoritePage extends ConsumerWidget {
   const FavoritePage({super.key});
@@ -168,10 +170,8 @@ class _FavThumb extends ConsumerWidget {
                           Flexible(
                             child: Text(
                               entry?.word ?? word,
-                              style: theme.textTheme.bodyMedium?.copyWith(
+                              style: theme.textTheme.titleMedium?.copyWith(
                                 color: AppColors.ink,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 16,
                               ),
                             ),
                           ),
@@ -183,7 +183,6 @@ class _FavThumb extends ConsumerWidget {
                                 overflow: TextOverflow.ellipsis,
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: theme.colorScheme.primary,
-                                  fontSize: 11,
                                 ),
                               ),
                             ),
@@ -232,7 +231,7 @@ class _FavThumb extends ConsumerWidget {
     String word,
     WordEntry? entry,
   ) {
-    const mode = ModeThemes.love;
+    const mode = ModeThemes.theme1;
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -314,13 +313,13 @@ class _FavFullSheetState extends ConsumerState<_FavFullSheet> {
             const SizedBox(height: AppSpacing.lg),
             Row(
               children: [
-                _Pill(
+                ActionPill(
                   icon: Icons.volume_up_outlined,
                   label: '朗读',
                   onTap: () => TtsService.instance.speak(_wordKey),
                 ),
                 const SizedBox(width: AppSpacing.xs),
-                _Pill(
+                ActionPill(
                   icon: isFav ? Icons.star : Icons.star_outline,
                   label: isFav ? '已收藏' : '收藏',
                   filled: isFav,
@@ -338,7 +337,8 @@ class _FavFullSheetState extends ConsumerState<_FavFullSheet> {
             Row(
               children: [
                 Expanded(
-                  child: _RateButton(
+                  child: RatingButton(
+                    dense: true,
                     icon: Icons.check_circle_outline,
                     label: '认识',
                     fg: AppColors.card,
@@ -351,7 +351,8 @@ class _FavFullSheetState extends ConsumerState<_FavFullSheet> {
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
-                  child: _RateButton(
+                  child: RatingButton(
+                    dense: true,
                     icon: Icons.sentiment_neutral_outlined,
                     label: '模糊',
                     fg: AppColors.ink,
@@ -368,7 +369,8 @@ class _FavFullSheetState extends ConsumerState<_FavFullSheet> {
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
-                  child: _RateButton(
+                  child: RatingButton(
+                    dense: true,
                     icon: Icons.cancel_outlined,
                     label: '不认识',
                     fg: AppColors.inkMuted,
@@ -417,109 +419,5 @@ class _FavFullSheetState extends ConsumerState<_FavFullSheet> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
-  }
-}
-
-class _Pill extends StatelessWidget {
-  const _Pill({
-    required this.icon,
-    required this.label,
-    this.filled = false,
-    this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool filled;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.pill),
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.sm,
-        ),
-        decoration: BoxDecoration(
-          color: filled
-              ? scheme.primary.withValues(alpha: AppColors.alphaSubtle)
-              : AppColors.card,
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-          border: Border.all(
-            color: filled
-                ? scheme.primary.withValues(alpha: 0.2)
-                : AppColors.line,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 16,
-              color: filled ? scheme.primary : AppColors.inkMuted,
-            ),
-            const SizedBox(width: AppSpacing.xs),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: filled ? scheme.primary : AppColors.ink,
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _RateButton extends StatelessWidget {
-  const _RateButton({
-    required this.icon,
-    required this.label,
-    required this.fg,
-    required this.bg,
-    required this.border,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color fg;
-  final Color bg;
-  final Color border;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: border),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 20, color: fg),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.labelLarge
-                  ?.copyWith(color: fg, letterSpacing: 0.04 * 13),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

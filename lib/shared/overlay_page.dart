@@ -50,7 +50,7 @@ class OverlayPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const mode = ModeThemes.love;
+    const mode = ModeThemes.theme1;
     return Scaffold(
       backgroundColor: mode.background,
       body: GestureDetector(
@@ -67,43 +67,18 @@ class OverlayPage extends StatelessWidget {
               right: 0,
               height: topFadeHeight,
               child: IgnorePointer(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        mode.background.withValues(alpha: 1),
-                        mode.background.withValues(alpha: 0.9),
-                        mode.background.withValues(alpha: 0),
-                      ],
-                      stops: const [0.0, 0.6, 1.0],
-                    ),
-                  ),
-                ),
+                child: DecoratedBox(decoration: AppOverlay.topFade()),
               ),
             ),
-            // 底部渐变遮罩。
+            // 底部渐变遮罩（高度含底部安全区，与主页一致）。
             Positioned(
               left: 0,
               right: 0,
               bottom: 0,
-              height: bottomFadeHeight,
+              height: bottomFadeHeight +
+                  MediaQuery.paddingOf(context).bottom,
               child: IgnorePointer(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.topCenter,
-                      colors: [
-                        mode.background.withValues(alpha: 1),
-                        mode.background.withValues(alpha: 0.85),
-                        mode.background.withValues(alpha: 0),
-                      ],
-                      stops: const [0.0, 0.5, 1.0],
-                    ),
-                  ),
-                ),
+                child: DecoratedBox(decoration: AppOverlay.bottomFade()),
               ),
             ),
             // 顶部浮层：返回胶囊 + 标题 + 右侧动作。
@@ -132,12 +107,11 @@ class OverlayPage extends StatelessWidget {
                             if (kicker != null) ...[
                               Text(
                                 kicker!,
-                                style: TextStyle(
-                                  color: mode.textMuted,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.12 * 10,
-                                ),
+                                style: Theme.of(context).textTheme.labelSmall
+                                    ?.copyWith(
+                                      color: mode.textMuted,
+                                      letterSpacing: 0.12 * 11,
+                                    ),
                               ),
                               const SizedBox(height: 1),
                             ],
@@ -145,11 +119,8 @@ class OverlayPage extends StatelessWidget {
                               title,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: mode.text,
-                                fontSize: 20,
-                                fontWeight: mode.strongWeight,
-                              ),
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(color: mode.text),
                             ),
                           ],
                         ),
@@ -189,7 +160,7 @@ Future<bool> confirmDialog(
   String cancelLabel = '取消',
   IconData icon = Icons.error_outline,
 }) async {
-  const mode = ModeThemes.love;
+  const mode = ModeThemes.theme1;
   final result = await showDialog<bool>(
     context: context,
     builder: (_) => AlertDialog(
