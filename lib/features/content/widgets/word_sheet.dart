@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/design/design.dart';
-import '../../../app/theme/fold_decoration.dart';
-import '../../../app/theme/mode_theme.dart';
 import '../../../data/dict/highlight_engine.dart';
 import '../../../data/models/srs_card_state.dart';
 import '../../../data/models/word_entry.dart';
 import '../../../data/providers/app_providers.dart';
 import '../../../data/services/tts_service.dart';
 import '../../../shared/action_pill.dart';
+import '../../../shared/app_sheet.dart';
 import '../../../shared/meaning_card.dart';
 import '../../../shared/rating_button.dart';
 import '../../../shared/word_history_stats.dart';
@@ -24,25 +23,11 @@ Future<void> showWordSheet(
   WidgetRef ref,
   HighlightSpan span,
 ) {
-  const mode = ModeThemes.theme1;
-  return showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (ctx) => CutBox(
-      fold: mode.cornerFold,
-      color: mode.cardBackground,
-      borderRadius: BorderRadius.vertical(top: mode.cardRadius.topLeft),
-      border: Border.all(color: mode.cardBorder, width: 1),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.10),
-          blurRadius: 24,
-          offset: const Offset(0, -6),
-        ),
-      ],
-      child: _WordSheet(span: span),
-    ),
+  return showAppSheet<void>(
+    context,
+    heightFactor: null,
+    maxHeightFactor: 0.70,
+    builder: (_) => _WordSheet(span: span),
   );
 }
 
@@ -68,25 +53,26 @@ class _WordSheetState extends ConsumerState<_WordSheet> {
     final entry = widget.span.entry;
     final isFav = ref.watch(favoriteWordSetProvider).contains(_wordKey);
 
-    return SafeArea(
-      child: Padding(
-        padding: AppInsets.card,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const DragHandle(),
-            const SizedBox(height: AppSpacing.sm),
-            Flexible(
-              child: SingleChildScrollView(
-                child: _flipped
-                    ? _buildReview(context)
-                    : _buildFront(context, entry, isFav),
+    return AppSheetFrame(
+      title: _flipped ? '释义回顾' : null,
+      scrollable: _flipped,
+      showFades: _flipped,
+      compact: !_flipped,
+      scrollTopPadding: 80,
+      scrollBottomPadding: 156,
+      bottomFadeHeight: 120,
+      child: _flipped
+          ? _buildReview(context)
+          : _buildFront(context, entry, isFav),
+      bottomBar: _flipped
+          ? FilledButton(
+              onPressed: _busy ? null : () => Navigator.of(context).pop(),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                child: Text('完成'),
               ),
-            ),
-          ],
-        ),
-      ),
+            )
+          : null,
     );
   }
 
@@ -200,23 +186,8 @@ class _WordSheetState extends ConsumerState<_WordSheet> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          '释义回顾',
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: AppColors.inkMuted,
-            letterSpacing: 0.08 * 11,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.md),
         MeaningCard(entry: widget.span.entry, showTags: false),
         const SizedBox(height: AppSpacing.lg),
-        FilledButton(
-          onPressed: _busy ? null : () => Navigator.of(context).pop(),
-          child: const Padding(
-            padding: EdgeInsets.symmetric(vertical: AppSpacing.xs),
-            child: Text('完成'),
-          ),
-        ),
       ],
     );
   }
@@ -249,24 +220,5 @@ class _WordSheetState extends ConsumerState<_WordSheet> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
-  }
-}
-
-/// 底部面板拖拽条（§13 底部释义面板同款）。
-class DragHandle extends StatelessWidget {
-  const DragHandle({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        width: 36,
-        height: 4,
-        decoration: BoxDecoration(
-          color: AppColors.line,
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-        ),
-      ),
-    );
   }
 }

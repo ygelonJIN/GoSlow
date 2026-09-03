@@ -98,6 +98,9 @@ const List<String> kExamTags = [
 
 const String kAllTag = 'all';
 
+/// 「全部考纲」的展示名（数据层唯一出处，UI 禁止重复硬编码）。
+const String kAllTagLabel = '全部考纲';
+
 /// 考纲代码 → 中文名。
 const Map<String, String> kExamTagNames = {
   'zk': '中考',
@@ -109,3 +112,13 @@ const Map<String, String> kExamTagNames = {
   'toefl': '托福',
   'gre': 'GRE',
 };
+
+/// 单个考纲代码的展示名；未收录时回退代码本身。
+String examTagName(String tag) => kExamTagNames[tag] ?? tag;
+
+/// 一组已选考纲的展示文案：含「全部」（或空集）时显示 [kAllTagLabel]，
+/// 否则用「 / 」连接各考纲中文名。
+String formatExamTagSelection(Set<String> tags) {
+  if (tags.isEmpty || tags.contains(kAllTag)) return kAllTagLabel;
+  return tags.map(examTagName).join(' / ');
+}

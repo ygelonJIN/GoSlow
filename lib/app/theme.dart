@@ -25,7 +25,7 @@ class AppTheme {
         fontFamily: mode.fontFamily,
         fontFamilyFallback: mode.fontFamilyFallback,
       ),
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: AppColors.paper,
         foregroundColor: AppColors.ink,
         elevation: AppElevation.level0,
@@ -34,6 +34,8 @@ class AppTheme {
         titleTextStyle: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.w600,
+          fontFamily: mode.fontFamily,
+          fontFamilyFallback: mode.fontFamilyFallback,
           color: AppColors.ink,
           letterSpacing: -0.3,
         ),
@@ -236,6 +238,12 @@ class AppTheme {
       titleMedium: style(
         fontSize: 16,
         height: 22,
+        fontWeight: FontWeight.w600,
+        color: ink,
+      ),
+      titleSmall: style(
+        fontSize: 14,
+        height: 20,
         fontWeight: FontWeight.w600,
         color: ink,
       ),

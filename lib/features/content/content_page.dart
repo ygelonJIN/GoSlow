@@ -278,10 +278,23 @@ class _ReviewFavoriteCard extends ConsumerWidget {
     final stats = ref.watch(contentWordsStatsProvider);
     final favCount = ref.watch(favoriteWordSetProvider).length;
     final currentTags = ref.watch(examTagProvider);
-    final examLabel = currentTags.contains(kAllTag)
-        ? '全部考纲'
-        : currentTags.map((t) => kExamTagNames[t] ?? t).join(' / ');
+    final examLabel = formatExamTagSelection(currentTags);
+    final countsAsync = ref.watch(examTagCountsProvider);
     final reviewSettings = ref.watch(flashcardSettingsProvider);
+
+    // 单选一个具体考纲时，在胶囊左侧附学习进度「已认识 / 总词数」；
+    // 「全部」或同时选多个考纲时无单一口径，不显示。
+    final singleTag = currentTags.length == 1 && !currentTags.contains(kAllTag)
+        ? currentTags.first
+        : null;
+    String? examProgress;
+    if (singleTag != null) {
+      final c = countsAsync.maybeWhen(
+        data: (m) => m[singleTag],
+        orElse: () => null,
+      );
+      if (c != null) examProgress = '${c.known}/${c.total}';
+    }
 
     return Padding(
       padding: AppInsets.pageHorizontal.copyWith(bottom: AppSpacing.sm),
@@ -310,6 +323,41 @@ class _ReviewFavoriteCard extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: AppSpacing.md),
+              const Divider(height: 1, color: AppColors.line),
+              const SizedBox(height: AppSpacing.sm),
+              _PickerRow(
+                title: '当前考纲',
+                value: examLabel,
+                progress: examProgress,
+                onTap: () async {
+                  await showExamTagPicker(
+                    context,
+                    currentTags,
+                    onChanged: (picked) {
+                      ref.read(examTagProvider.notifier).state = picked;
+                    },
+                  );
+                },
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              const Divider(height: 1, color: AppColors.line),
+              const SizedBox(height: AppSpacing.sm),
+              _PickerRow(
+                title: '复习每轮张数',
+                value: formatSessionSize(reviewSettings.sessionSize),
+                onTap: () async {
+                  await showReviewSizePicker(
+                    context,
+                    reviewSettings.sessionSize,
+                    onChanged: (picked) {
+                      final latest = ref.read(flashcardSettingsProvider);
+                      ref.read(flashcardSettingsProvider.notifier).state =
+                          latest.copyWith(sessionSize: picked);
+                    },
+                  );
+                },
+              ),
+              const SizedBox(height: AppSpacing.md),
               Row(
                 children: [
                   Expanded(
@@ -332,36 +380,6 @@ class _ReviewFavoriteCard extends ConsumerWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.md),
-              const Divider(height: 1, color: AppColors.line),
-              const SizedBox(height: AppSpacing.sm),
-              _PickerRow(
-                title: '当前考纲',
-                value: examLabel,
-                onTap: () async {
-                  final picked = await showExamTagPicker(context, currentTags);
-                  if (picked != null) {
-                    ref.read(examTagProvider.notifier).state = picked;
-                  }
-                },
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              const Divider(height: 1, color: AppColors.line),
-              const SizedBox(height: AppSpacing.sm),
-              _PickerRow(
-                title: '复习每轮张数',
-                value: '${reviewSettings.sessionSize} 张',
-                onTap: () async {
-                  final picked = await showReviewSizePicker(
-                    context,
-                    reviewSettings.sessionSize,
-                  );
-                  if (picked != null) {
-                    ref.read(flashcardSettingsProvider.notifier).state =
-                        reviewSettings.copyWith(sessionSize: picked);
-                  }
-                },
-              ),
             ],
           ),
         ),
@@ -370,16 +388,22 @@ class _ReviewFavoriteCard extends ConsumerWidget {
   }
 }
 
-/// 卡片内的选择行：标题 + 尾部值胶囊 + 箭头（当前考纲 / 复习每轮张数共用）。
+/// 卡片内的选择行：标题（左）+ 尾部（可选进度小字 + 值胶囊 + 箭头），
+/// 尾部整体靠右贴边，剩余空间留在标题与尾部之间（当前考纲 / 复习每轮张数共用）。
 class _PickerRow extends StatelessWidget {
   const _PickerRow({
     required this.title,
     required this.value,
     required this.onTap,
+    this.progress,
   });
 
   final String title;
   final String value;
+
+  /// 值胶囊左侧的进度小字（如单选考纲的已认识 / 总词数）；为 null 不显示。
+  final String? progress;
+
   final VoidCallback onTap;
 
   @override
@@ -399,33 +423,53 @@ class _PickerRow extends StatelessWidget {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const Spacer(),
-            Flexible(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.sm,
-                  vertical: 3,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.seedSoft,
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                ),
-                child: Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: scheme.primary,
-                    fontWeight: FontWeight.w700,
+            const SizedBox(width: AppSpacing.md),
+            // 尾部区撑满剩余宽度：靠右排进度 + 值胶囊 + 箭头，
+            // 值过长时胶囊内省略号截断，不会留下行尾空距。
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  if (progress != null) ...[
+                    Text(
+                      progress!,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.inkMuted,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                  ],
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.sm,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.seedSoft,
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      child: Text(
+                        value,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: scheme.primary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: AppSpacing.xxs),
+                  Icon(
+                    Icons.chevron_right,
+                    size: 18,
+                    color: scheme.primary.withValues(alpha: 0.75),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(width: AppSpacing.xxs),
-            Icon(
-              Icons.chevron_right,
-              size: 18,
-              color: scheme.primary.withValues(alpha: 0.75),
             ),
           ],
         ),

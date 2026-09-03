@@ -75,6 +75,12 @@ final reviewQueueProvider = FutureProvider<List<String>>((ref) async {
   return repo.reviewQueue();
 });
 
+/// 复习每轮张数的候选项（数据层统一，UI 禁止重复硬编码）。
+const List<int> kReviewSessionSizes = [10, 20, 30, 50, 80, 100];
+
+/// 复习每轮张数的展示文案。
+String formatSessionSize(int size) => '$size 张';
+
 /// 复习/阅读会话设置：每轮张数 / 自动朗读。
 class FlashcardSettings {
   const FlashcardSettings({this.sessionSize = 10, this.autoSpeak = true});

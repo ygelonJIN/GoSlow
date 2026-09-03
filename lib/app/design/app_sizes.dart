@@ -38,5 +38,5 @@ abstract final class AppSizes {
   static const double settingsTopScrim = 150;
 
   /// 侧栏底部遮罩高。
-  static const double settingsBottomScrim = 200;
+  static const double settingsBottomScrim = 130;
 }

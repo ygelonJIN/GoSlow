@@ -155,7 +155,7 @@ class _MeaningCardState extends State<MeaningCard> {
                   for (final tag in entry.tags)
                     Chip(
                       label: Text(
-                        kExamTagNames[tag] ?? tag,
+                        examTagName(tag),
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: scheme.primary,
                         ),

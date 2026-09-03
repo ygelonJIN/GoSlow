@@ -225,7 +225,7 @@ class _TagColorCard extends ConsumerWidget {
                       const SizedBox(width: AppSpacing.md),
                       Expanded(
                         child: Text(
-                          kExamTagNames[kExamTags[i]] ?? kExamTags[i],
+                          examTagName(kExamTags[i]),
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(color: AppColors.ink),
                         ),
@@ -260,7 +260,7 @@ class _TagColorCard extends ConsumerWidget {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (ctx) => _ColorSheet(
-        tagName: kExamTagNames[tag] ?? tag,
+        tagName: examTagName(tag),
         current: current,
         customized: overrides.containsKey(tag),
       ),
